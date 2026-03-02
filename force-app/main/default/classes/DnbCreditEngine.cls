@@ -54,5 +54,7 @@ public with sharing class DnbCreditEngine {
         assessment.Rating_Reason__c = result.ratingReason;
 
         insert assessment;
+        System.debug('DNB JSON: ' + json);
+        System.debug('Result before evaluate: ' + result);
     }
 }

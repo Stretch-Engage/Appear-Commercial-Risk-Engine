@@ -46,5 +46,11 @@ public with sharing class DnbCreditEvaluator {
 
         // RED (explicit reasoning)
         data.ratingReason = 'Financial strength or risk indicators below policy thresholds';
+
+        // Debug logs for transparency
+        System.debug('Evaluating credit result...');
+System.debug('Failure score: ' + data.failureScorePercentile);
+System.debug('Financial strength: ' + data.financialStrength);
+System.debug('Appear rating set to: ' + data.appearCreditRating);
     }
 }
