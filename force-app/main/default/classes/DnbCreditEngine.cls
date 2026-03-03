@@ -45,6 +45,7 @@ public with sharing class DnbCreditEngine {
         // Insert Credit Assessment Snapshot 
         Credit_Assessment__c assessment = new Credit_Assessment__c();
         assessment.Account__c = acc.Id;
+        assessment.DUNS__c = acc.DUNs_Number__c;
         assessment.Assesment_Type__c = 'Initial';
         assessment.Assessment_Date__c = System.now();
         assessment.Failure_Score_Percentile__c = result.failureScorePercentile;
