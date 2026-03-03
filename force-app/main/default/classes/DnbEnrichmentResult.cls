@@ -28,5 +28,7 @@ public with sharing class DnbEnrichmentResult {
         // Transaction details
         public String transactionId;
 
+        
+
     
 }

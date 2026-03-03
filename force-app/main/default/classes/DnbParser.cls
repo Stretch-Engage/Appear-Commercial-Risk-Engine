@@ -65,11 +65,13 @@ public with sharing class DnbParser {
                         (Decimal) maxLimit.get('value');
                 }
             }
-            // Transaction ID
+            // Transaction ID (root level)
             Map<String, Object> transactionDetail =
-                (Map<String, Object>) assessment.get('transaction');
+                (Map<String, Object>) payload.get('transactionDetail');
+
             if (transactionDetail != null) {
-                result.transactionId = (String) transactionDetail.get('id');
+                result.transactionId =
+                    (String) transactionDetail.get('transactionID');
             }
 
             result.hasOpenLiens = false;
