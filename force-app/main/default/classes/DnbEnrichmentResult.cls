@@ -24,5 +24,9 @@ public with sharing class DnbEnrichmentResult {
         // Result
         public string appearCreditRating; // AMBER, GREEN, RED  
         public String ratingReason;
+
+        // Transaction details
+        public String transactionId;
+
     
 }

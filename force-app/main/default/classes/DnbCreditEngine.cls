@@ -39,6 +39,7 @@ public with sharing class DnbCreditEngine {
         acc.DnB_Rating_Reason__c = result.ratingReason;
         acc.DnB_Last_Refresh_Date__c = System.now();
         acc.DnB_Financial_Strength__c = result.financialStrength;
+        acc.DnB_Last_Transaction_ID__c = result.transactionId;
 
         update acc;
 
@@ -53,6 +54,7 @@ public with sharing class DnbCreditEngine {
         assessment.Financial_Strength__c = result.financialStrength;
         assessment.Appear_Credit_Rating__c = result.appearCreditRating;
         assessment.Rating_Reason__c = result.ratingReason;
+        assessment.DnB_Transaction_Id__c = result.transactionId;
 
         insert assessment;
         System.debug('DNB JSON: ' + json);

@@ -65,6 +65,12 @@ public with sharing class DnbParser {
                         (Decimal) maxLimit.get('value');
                 }
             }
+            // Transaction ID
+            Map<String, Object> transactionDetail =
+                (Map<String, Object>) assessment.get('transaction');
+            if (transactionDetail != null) {
+                result.transactionId = (String) transactionDetail.get('id');
+            }
 
             result.hasOpenLiens = false;
             result.hasOpenJudgments = false;
