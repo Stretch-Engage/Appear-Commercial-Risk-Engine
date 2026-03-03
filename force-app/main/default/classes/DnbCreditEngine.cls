@@ -2,12 +2,33 @@ public with sharing class DnbCreditEngine {
 
     public static void run(
         Id accountId,
-        String blockGroupName
+        String scenarioKey
     ) {
 
         if (accountId == null) {
             throw new IllegalArgumentException('AccountId cannot be null');
         }
+
+        if (String.isBlank(scenarioKey)) {
+            throw new IllegalArgumentException('Scenario key cannot be blank');
+        }
+
+        // Resolve Block Group from Scenario
+        Dnb_Block_Group__mdt config = [
+            SELECT DeveloperName, Active__c
+            FROM Dnb_Block_Group__mdt
+            WHERE Scenario_Key__c = :scenarioKey
+            AND Active__c = true
+            LIMIT 1
+        ];
+
+        if (config == null) {
+            throw new IllegalArgumentException(
+                'No active block group found for scenario: ' + scenarioKey
+            );
+        }
+
+        String blockGroupName = config.DeveloperName;
 
         // Query Account
         Account acc = [
@@ -57,7 +78,8 @@ public with sharing class DnbCreditEngine {
         assessment.DnB_Transaction_Id__c = result.transactionId;
 
         insert assessment;
+
         System.debug('DNB JSON: ' + json);
-        System.debug('Result before evaluate: ' + result);
+        System.debug('Result: ' + result);
     }
 }
