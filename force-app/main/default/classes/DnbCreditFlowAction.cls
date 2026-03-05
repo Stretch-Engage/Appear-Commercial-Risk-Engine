@@ -1,6 +1,6 @@
-public with sharing class DnbCreditFlowAction {
+global with sharing class DnbCreditFlowAction {
 
-    public class Request {
+    global class Request {
 
         @InvocableVariable(required=true)
         public Id accountId;
