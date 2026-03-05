@@ -1,8 +1,8 @@
-public class DnbCreditFlowRequest {
+global class DnbCreditFlowRequest {
 
     @InvocableVariable(required=true)
-    public Id accountId;
+    global Id accountId;
 
     @InvocableVariable(required=true)
-    public String scenarioKey;
+    global String scenarioKey;
 }
