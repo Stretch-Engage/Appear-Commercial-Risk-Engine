@@ -1,25 +1,16 @@
-global with sharing class DnbCreditFlowAction {
-
-    global class Request {
-
-        @InvocableVariable(required=true)
-        public Id accountId;
-
-        @InvocableVariable(required=true)
-        public String scenarioKey;
-    }
+public with sharing class DnbCreditFlowAction {
 
     @InvocableMethod(
         label='Run DNB Credit Engine'
         description='Runs DNB enrichment using Account Id and Scenario Key'
     )
-    public static void run(List<Request> requests) {
+    public static void run(List<DnbCreditFlowRequest> requests) {
 
         if (requests == null || requests.isEmpty()) {
             return;
         }
 
-        for (Request req : requests) {
+        for (DnbCreditFlowRequest req : requests) {
 
             if (req.accountId == null || String.isBlank(req.scenarioKey)) {
                 continue;
