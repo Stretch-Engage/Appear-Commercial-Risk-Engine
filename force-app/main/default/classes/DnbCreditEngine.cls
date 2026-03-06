@@ -22,7 +22,7 @@ public with sharing class DnbCreditEngine {
             LIMIT 1
         ];
 
-        if (config == null) {
+        if (config == null ){
             throw new IllegalArgumentException(
                 'No active block group found for scenario: ' + scenarioKey
             );
