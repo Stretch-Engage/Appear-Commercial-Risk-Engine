@@ -27,6 +27,12 @@ public with sharing class DnbCreditEngine {
                 'No active block group found for scenario: ' + scenarioKey
             );
         }
+        if (config.Active__c == false) {
+            throw new IllegalArgumentException(
+                'Block group for scenario is not active: ' + scenarioKey
+            );
+        }
+  
 
         String blockGroupName = config.DeveloperName;
 
