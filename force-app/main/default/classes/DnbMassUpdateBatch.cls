@@ -23,6 +23,7 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts {
                     acc.Id,
                     'MASS_UPDATE'
                 );
+                successCount++;
 
             } catch (Exception e) {
 
@@ -32,6 +33,7 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts {
                     ' | Scenario MASS_UPDATE | Error: ' +
                     e.getMessage()
                 );
+                failureCount++;
             }
         }
     }
