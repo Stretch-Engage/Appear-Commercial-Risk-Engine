@@ -1,5 +1,7 @@
 public with sharing class DnbMassUpdateBatch 
 implements Database.Batchable<SObject>, Database.AllowsCallouts {
+    public Integer successCount = 0;
+    public Integer failureCount = 0;
 
     public Database.QueryLocator start(Database.BatchableContext bc) {
 
@@ -36,6 +38,6 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts {
 
     public void finish(Database.BatchableContext bc) {
 
-        System.debug('DNB mass update batch completed');
+        System.debug('DNB mass update batch completed | Success: ' + successCount + ' | Failures: ' + failureCount);
     }
 }
