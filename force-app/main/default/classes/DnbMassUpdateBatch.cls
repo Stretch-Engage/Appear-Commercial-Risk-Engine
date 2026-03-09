@@ -1,5 +1,6 @@
 public with sharing class DnbMassUpdateBatch 
-implements Database.Batchable<SObject>, Database.AllowsCallouts {
+implements Database.Batchable<SObject>, Database.AllowsCallouts, Database.Stateful {
+
     public Integer successCount = 0;
     public Integer failureCount = 0;
 
@@ -9,7 +10,11 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts {
             SELECT Id, DUNs_Number__c
             FROM Account
             WHERE DUNs_Number__c != null
-            AND DnB_Last_Refresh_Date__c <= LAST_N_DAYS:30]);
+            AND (
+                DnB_Last_Refresh_Date__c = null
+                OR DnB_Last_Refresh_Date__c < LAST_N_DAYS:30
+            )
+        ]);
     }
 
     public void execute(Database.BatchableContext bc, List<Account> scope) {
@@ -19,13 +24,13 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts {
             try {
                 System.debug('Running MASS_UPDATE for Account: ' + acc.Id);
 
-                DnbCreditEngine.run(
-                    acc.Id,
-                    'MASS_UPDATE'
-                );
+                DnbCreditEngine.run(acc.Id, 'MASS_UPDATE');
+
                 successCount++;
 
             } catch (Exception e) {
+
+                failureCount++;
 
                 System.debug(
                     'Mass update failed for Account ' +
@@ -33,13 +38,17 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts {
                     ' | Scenario MASS_UPDATE | Error: ' +
                     e.getMessage()
                 );
-                failureCount++;
             }
         }
     }
 
     public void finish(Database.BatchableContext bc) {
 
-        System.debug('DNB mass update batch completed | Success: ' + successCount + ' | Failures:' + failureCount);
+        System.debug(
+            'DNB mass update batch completed | Success: ' +
+            successCount +
+            ' | Failures: ' +
+            failureCount
+        );
     }
 }
