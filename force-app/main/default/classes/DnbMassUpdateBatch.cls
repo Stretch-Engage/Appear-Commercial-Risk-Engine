@@ -38,6 +38,6 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts {
 
     public void finish(Database.BatchableContext bc) {
 
-        System.debug('DNB mass update batch completed | Success: ' + successCount + ' | Failures: ' + failureCount);
+        System.debug('DNB mass update batch completed | Success: ' + successCount + ' | Failures:' + failureCount);
     }
 }
