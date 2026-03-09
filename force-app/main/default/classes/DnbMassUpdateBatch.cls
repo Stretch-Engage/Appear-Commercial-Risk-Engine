@@ -6,7 +6,8 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts {
         return Database.getQueryLocator([
             SELECT Id, DUNs_Number__c
             FROM Account
-            WHERE DUNs_Number__c != null]);
+            WHERE DUNs_Number__c != null
+            AND DnB_Last_Refresh_Date__c <= LAST_N_DAYS:30]);
     }
 
     public void execute(Database.BatchableContext bc, List<Account> scope) {
