@@ -1,6 +1,6 @@
 public with sharing class DnbMassUpdateBatch 
 implements Database.Batchable<SObject>, Database.AllowsCallouts, Database.Stateful {
-
+// processes Accounts in chunks
     public Integer successCount = 0;
     public Integer failureCount = 0;
 
