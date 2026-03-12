@@ -38,7 +38,7 @@ public with sharing class DnbCreditEngine {
 
         // Query Account
         Account acc = [
-            SELECT Id, Name, DUNs_Number__c
+            SELECT Id, Name, DUNs_Number__c,BillingCountryCode
             FROM Account
             WHERE Id = :accountId
             LIMIT 1
@@ -51,7 +51,8 @@ public with sharing class DnbCreditEngine {
         // Fetch DNB Data
         String json = DnbService.fetchCompanyData(
             acc.DUNs_Number__c,
-            blockGroupName
+            blockGroupName,
+            acc.BillingCountryCode
         );
 
         // Parse

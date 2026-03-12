@@ -1,6 +1,6 @@
 public with sharing class DnbService {
 
-    public static String fetchCompanyData(String duns, String blockGroupName) {
+    public static String fetchCompanyData(String duns, String blockGroupName, String countryCode) {
 
         if (String.isBlank(duns)) {
             throw new IllegalArgumentException('DUNS number cannot be blank');
@@ -23,6 +23,15 @@ public with sharing class DnbService {
                           duns +
                           '?blockIDs=' +
                           EncodingUtil.urlEncode(blockIds, 'UTF-8');
+
+                 // Germany-specific parameters
+                if (countryCode != null && countryCode == 'DE') {
+                    endpoint +=
+                        '&tradeUp=hq' +
+                        '&customerReference=' +
+                        EncodingUtil.urlEncode('SF-' + duns, 'UTF-8') +
+                        '&orderReason=6332';
+                }
 
         req.setEndpoint(endpoint);
         req.setMethod('GET');
