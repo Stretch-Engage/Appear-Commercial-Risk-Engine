@@ -1,6 +1,6 @@
-public with sharing class DnbMassUpdateBatch 
+public with sharing class DnbMassUpdateBatch
 implements Database.Batchable<SObject>, Database.AllowsCallouts, Database.Stateful {
-// processes Accounts in chunks
+
     public Integer successCount = 0;
     public Integer failureCount = 0;
 
@@ -36,7 +36,9 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts, Database.Statef
                     'Mass update failed for Account ' +
                     acc.Id +
                     ' | Scenario MASS_UPDATE | Error: ' +
-                    e.getMessage()
+                    e.getMessage() +
+                    ' | Stack: ' +
+                    e.getStackTraceString()
                 );
             }
         }
@@ -45,7 +47,9 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts, Database.Statef
     public void finish(Database.BatchableContext bc) {
 
         System.debug(
-            'DNB mass update batch completed | Success: ' +
+            'DNB mass update batch completed | JobId: ' +
+            bc.getJobId() +
+            ' | Success: ' +
             successCount +
             ' | Failures: ' +
             failureCount
