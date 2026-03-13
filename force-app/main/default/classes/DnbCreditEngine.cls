@@ -68,6 +68,7 @@ public with sharing class DnbCreditEngine {
         acc.DnB_Last_Refresh_Date__c = System.now();
         acc.DnB_Financial_Strength__c = result.financialStrength;
         acc.DnB_Last_Transaction_ID__c = result.transactionId;
+        acc.DnB_Recommended_Maximum_Credit__c = String.valueOf(result.creditLimit);
 
         update acc;
 
