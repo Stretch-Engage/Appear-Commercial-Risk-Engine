@@ -40,7 +40,7 @@ public with sharing class DnbParser {
 
             if (delinquencyScore != null) {
                 result.delinquencyScoreClass =
-                    (Decimal) delinquencyScore.get('classScore');
+                    (Decimal) delinquencyScore.get('nationalPercentile');
             }
             
             // Standard Rating
