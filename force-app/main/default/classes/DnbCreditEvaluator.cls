@@ -7,7 +7,7 @@ public with sharing class DnbCreditEvaluator {
         }
 
         // Conservative default
-        data.appearCreditRating = 'RED';
+        data.appearCreditRating = 'RED_High_Risk';
         data.ratingReason = 'Defaulted to RED - No evaluation performed';
 
         // Required fields check
@@ -28,7 +28,7 @@ public with sharing class DnbCreditEvaluator {
             failureScore >= 80 &&
             delinquencyScore <= 2) {
 
-            data.appearCreditRating = 'GREEN';
+            data.appearCreditRating = 'GREEN_Very_Low_Risk';
             data.ratingReason = 'High financial strength with low risk indicators';
             return;
         }
@@ -39,7 +39,7 @@ public with sharing class DnbCreditEvaluator {
             failureScore < 80 &&
             delinquencyScore <= 4) {
 
-            data.appearCreditRating = 'AMBER';
+            data.appearCreditRating = 'AMBER_Moderate_Risk';
             data.ratingReason = 'Moderate financial strength with acceptable risk profile';
             return;
         }
