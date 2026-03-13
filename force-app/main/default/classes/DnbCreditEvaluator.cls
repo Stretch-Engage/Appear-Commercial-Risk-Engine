@@ -6,11 +6,9 @@ public with sharing class DnbCreditEvaluator {
             return;
         }
 
-        // Conservative default
         data.appearCreditRating = 'RED_High_Risk';
         data.ratingReason = 'Defaulted to RED - No evaluation performed';
 
-        // Required fields check
         if (data.failureScorePercentile == null ||
             data.delinquencyScoreClass == null ||
             String.isBlank(data.financialStrength)) {
@@ -21,32 +19,38 @@ public with sharing class DnbCreditEvaluator {
 
         Decimal failureScore = data.failureScorePercentile;
         Decimal delinquencyScore = data.delinquencyScoreClass;
-        String strength = data.financialStrength.trim().toUpperCase();
 
-        // GREEN
-        if ((strength == '4A' || strength == '5A') &&
-            failureScore >= 80 &&
-            delinquencyScore <= 2) {
+        Decimal weightedScore = (failureScore * 0.6) + (delinquencyScore * 0.4);
 
+        Decimal fsiScore = DnbFsiScoringService.getScore(data.financialStrength);
+
+        Decimal finalScore = (weightedScore * 0.7) + (fsiScore * 0.3);
+
+        if (finalScore >= 81) {
             data.appearCreditRating = 'GREEN_Very_Low_Risk';
-            data.ratingReason = 'High financial strength with low risk indicators';
+            data.ratingReason = 'Very low risk based on weighted DNB score and FSI';
             return;
         }
 
-        // AMBER
-        if ((strength == '2A' || strength == '3A') &&
-            failureScore >= 50 &&
-            failureScore < 80 &&
-            delinquencyScore <= 4) {
+        if (finalScore >= 61) {
+            data.appearCreditRating = 'GREEN_Low_Risk';
+            data.ratingReason = 'Low risk based on weighted DNB score and FSI';
+            return;
+        }
 
+        if (finalScore >= 41) {
             data.appearCreditRating = 'AMBER_Moderate_Risk';
-            data.ratingReason = 'Moderate financial strength with acceptable risk profile';
+            data.ratingReason = 'Moderate risk based on weighted DNB score and FSI';
             return;
         }
 
-        // RED (explicit reasoning)
-        data.ratingReason = 'Financial strength or risk indicators below policy thresholds';
+        if (finalScore >= 21) {
+            data.appearCreditRating = 'AMBER_Elevated_Risk';
+            data.ratingReason = 'Elevated risk based on weighted DNB score and FSI';
+            return;
+        }
 
-  
+        data.appearCreditRating = 'RED_High_Risk';
+        data.ratingReason = 'High risk based on weighted DNB score and FSI';
     }
 }
