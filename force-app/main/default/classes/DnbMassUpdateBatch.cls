@@ -3,6 +3,7 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts, Database.Statef
 
     public Integer successCount = 0;
     public Integer failureCount = 0;
+    public List<String> failedAccountIds = new List<String>();
 
     public Database.QueryLocator start(Database.BatchableContext bc) {
 
@@ -19,40 +20,38 @@ implements Database.Batchable<SObject>, Database.AllowsCallouts, Database.Statef
 
     public void execute(Database.BatchableContext bc, List<Account> scope) {
 
-        for (Account acc : scope) {
+        Account acc = scope[0];
 
-            try {
-                System.debug('Running MASS_UPDATE for Account: ' + acc.Id);
+        try {
+            System.debug('Running MASS_UPDATE for Account: ' + acc.Id);
 
-                DnbCreditEngine.run(acc.Id, 'MASS_UPDATE');
+            DnbCreditEngine.run(acc.Id, 'MASS_UPDATE');
 
-                successCount++;
+            successCount++;
 
-            } catch (Exception e) {
+        } catch (Exception e) {
 
-                failureCount++;
+            failureCount++;
+            failedAccountIds.add(acc.Id);
 
-                System.debug(
-                    'Mass update failed for Account ' +
-                    acc.Id +
-                    ' | Scenario MASS_UPDATE | Error: ' +
-                    e.getMessage() +
-                    ' | Stack: ' +
-                    e.getStackTraceString()
-                );
-            }
+            System.debug(
+                'Mass update failed for Account ' + acc.Id +
+                ' | Error: ' + e.getMessage() +
+                ' | Stack: ' + e.getStackTraceString()
+            );
         }
     }
 
     public void finish(Database.BatchableContext bc) {
 
         System.debug(
-            'DNB mass update batch completed | JobId: ' +
-            bc.getJobId() +
-            ' | Success: ' +
-            successCount +
-            ' | Failures: ' +
-            failureCount
+            'DNB mass update batch completed | JobId: ' + bc.getJobId() +
+            ' | Success: ' + successCount +
+            ' | Failures: ' + failureCount
         );
+
+        if (failureCount > 0) {
+            System.debug('Failed Account IDs: ' + failedAccountIds);
+        }
     }
 }
