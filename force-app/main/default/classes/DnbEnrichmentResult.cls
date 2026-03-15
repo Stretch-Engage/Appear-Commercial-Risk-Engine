@@ -3,11 +3,8 @@ public with sharing class DnbEnrichmentResult {
 
         public String duns;
         public String companyName ;
-        public String address;
-        public String city;
-        public String state;
         public String postalCode;
-        public String country;
+       
         
 
         // Credit Information 
