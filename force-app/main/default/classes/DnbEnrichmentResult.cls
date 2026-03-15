@@ -24,9 +24,5 @@ public with sharing class DnbEnrichmentResult {
         public String ratingReason;
 
         // Transaction details
-        public String transactionId;
-
-        
-
-    
+        public String transactionId;    
 }
