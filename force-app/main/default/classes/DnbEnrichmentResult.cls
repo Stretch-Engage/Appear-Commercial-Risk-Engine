@@ -15,6 +15,7 @@ public with sharing class DnbEnrichmentResult {
         public Decimal failureScorePercentile;    
         public Decimal delinquencyScoreClass;
         public Decimal creditLimit;
+        public String compositeScore;
 
         // Legal Information
         public Boolean hasOpenLiens;

@@ -65,6 +65,15 @@ public with sharing class DnbParser {
                         (Decimal) maxLimit.get('value');
                 }
             }
+            
+            // Composite Score
+            Map<String, Object> compositeScore =
+                (Map<String, Object>) assessment.get('standardRating');
+            if (compositeScore != null) {
+                result.compositeScore =
+                    (String) compositeScore.get('rating');
+            }
+
             // Transaction ID (root level)
             Map<String, Object> transactionDetail =
                 (Map<String, Object>) payload.get('transactionDetail');

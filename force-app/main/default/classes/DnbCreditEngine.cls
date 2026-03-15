@@ -70,6 +70,7 @@ public with sharing class DnbCreditEngine {
         acc.DnB_Last_Transaction_ID__c = result.transactionId;
         acc.DnB_Recommended_Maximum_Credit__c = String.valueOf(result.creditLimit);
         acc.Appear_Rating_Reason__c = result.ratingReason;
+        acc.CCA__c = result.compositeScore;
 
         update acc;
 
