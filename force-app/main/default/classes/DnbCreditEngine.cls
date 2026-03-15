@@ -1,4 +1,5 @@
 public with sharing class DnbCreditEngine {
+    @TestVisible private static Dnb_Block_Group__mdt mockConfig = null;
 
     public static void run(
         Id accountId,
@@ -14,13 +15,9 @@ public with sharing class DnbCreditEngine {
         }
 
         // Resolve Block Group from Scenario
-        Dnb_Block_Group__mdt config = [
-            SELECT DeveloperName, Active__c
-            FROM Dnb_Block_Group__mdt
-            WHERE Scenario_Key__c = :scenarioKey
-            AND Active__c = true
-            LIMIT 1
-        ];
+        Dnb_Block_Group__mdt config = mockConfig != null
+            ? mockConfig
+            : queryBlockGroup(scenarioKey);
 
         if (config == null ){
             throw new IllegalArgumentException(
@@ -89,7 +86,21 @@ public with sharing class DnbCreditEngine {
 
         insert assessment;
 
-        System.debug('DNB JSON: ' + json);
-        System.debug('Result: ' + result);
+
+    }
+      private static Dnb_Block_Group__mdt queryBlockGroup(String scenarioKey) {
+        try {
+            return [
+                SELECT DeveloperName, Active__c
+                FROM Dnb_Block_Group__mdt
+                WHERE Scenario_Key__c = :scenarioKey
+                AND Active__c = true
+                LIMIT 1
+            ];
+        } catch (QueryException e) {
+            throw new IllegalArgumentException(
+                'No active block group found for scenario: ' + scenarioKey
+            );
+        }
     }
 }
