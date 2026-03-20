@@ -7,12 +7,18 @@ public with sharing class DnbEnrichmentResult {
        
         
 
-        // Credit Information 
-        public String financialStrength;          
-        public Decimal failureScorePercentile;    
+        // Credit Information
+        public String financialStrength;
+        public Decimal failureScorePercentile;
         public Decimal delinquencyScoreClass;
         public Decimal creditLimit;
+        public String creditLimitCurrency;
         public String compositeScore;
+
+        // Score Descriptions
+        public String failureScoreDescription;
+        public String delinquencyScoreDescription;
+        public String dnbRatingDescription;
 
         // Legal Information
         public Boolean hasOpenLiens;
