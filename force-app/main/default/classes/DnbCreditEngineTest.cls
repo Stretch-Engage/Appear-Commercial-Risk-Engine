@@ -39,11 +39,18 @@ private class DnbCreditEngineTest {
                         '"primaryName": "Acme Corporation",' +
                         '"countryISOAlpha2Code": "US",' +
                         '"dnbAssessment": {' +
-                            '"failureScore":     {"nationalPercentile": 100},' +
-                            '"delinquencyScore": {"nationalPercentile": 100},' +
-                            '"standardRating":   {"financialStrength": "5A", "rating": "1"},' +
+                            '"failureScore": {"nationalPercentile": 100, "classScoreDescription": "Very low risk of financial stress"},' +
+                            '"delinquencyScore": {"nationalPercentile": 100, "classScoreDescription": "Very low risk of payment delinquency"},' +
+                            '"standardRating": {' +
+                                '"financialStrength": "5A",' +
+                                '"rating": "1",' +
+                                '"ratingReason": [' +
+                                    '{"description": "Strong financial profile"},' +
+                                    '{"description": "Active trading record"}' +
+                                ']' +
+                            '},' +
                             '"creditLimitRecommendation": {' +
-                                '"maximumRecommendedLimit": {"value": 250000}' +
+                                '"maximumRecommendedLimit": {"value": 250000, "currency": "USD"}' +
                             '}' +
                         '}' +
                     '}' +
@@ -421,7 +428,13 @@ static void testDiagnostic_accountInsert() {
                     DnB_Last_Transaction_ID__c,
                     DnB_Recommended_Maximum_Credit__c,
                     Appear_Rating_Reason__c,
-                    CCA__c
+                    CCA__c,
+                    Failure_Score_Percentile__c,
+                    Delinquency_Score__c,
+                    Recommended_Credit_Currency__c,
+                    DnB_Failure_Score_Description__c,
+                    DnB_Delinquency_Score_Description__c,
+                    DnB_Rating_Description__c
             FROM Account
             WHERE Id = :acc.Id
         ];
@@ -459,6 +472,24 @@ static void testDiagnostic_accountInsert() {
             updated.Appear_Rating_Reason__c,
             'STEP 11: Appear_Rating_Reason__c should mirror DnB_Rating_Reason__c'
         );
+        System.assertEquals(100,
+            updated.Failure_Score_Percentile__c,
+            'STEP 11: failure score percentile should match mock');
+        System.assertEquals(100,
+            updated.Delinquency_Score__c,
+            'STEP 11: delinquency score should match mock');
+        System.assertEquals('USD',
+            updated.Recommended_Credit_Currency__c,
+            'STEP 11: credit currency should match mock');
+        System.assertEquals('Very low risk of financial stress',
+            updated.DnB_Failure_Score_Description__c,
+            'STEP 11: failure score description should match mock');
+        System.assertEquals('Very low risk of payment delinquency',
+            updated.DnB_Delinquency_Score_Description__c,
+            'STEP 11: delinquency score description should match mock');
+        System.assertEquals('Strong financial profile; Active trading record',
+            updated.DnB_Rating_Description__c,
+            'STEP 11: D&B rating description should match mock');
     }
 
     // ─────────────────────────────────────────
@@ -485,7 +516,10 @@ static void testDiagnostic_accountInsert() {
                     Financial_Strength__c,
                     Appear_Credit_Rating__c,
                     Rating_Reason__c,
-                    DnB_Transaction_Id__c
+                    DnB_Transaction_Id__c,
+                    DnB_Failure_Score_Description__c,
+                    DnB_Delinquency_Score_Description__c,
+                    DnB_Rating_Description__c
             FROM Credit_Assessment__c
             WHERE Account__c = :acc.Id
         ];
@@ -512,6 +546,15 @@ static void testDiagnostic_accountInsert() {
             'STEP 12: transaction ID should match mock');
         System.assertNotEquals(null,   assessments[0].Assessment_Date__c,
             'STEP 12: assessment date should be stamped');
+        System.assertEquals('Very low risk of financial stress',
+            assessments[0].DnB_Failure_Score_Description__c,
+            'STEP 12: failure score description should be stored on snapshot');
+        System.assertEquals('Very low risk of payment delinquency',
+            assessments[0].DnB_Delinquency_Score_Description__c,
+            'STEP 12: delinquency score description should be stored on snapshot');
+        System.assertEquals('Strong financial profile; Active trading record',
+            assessments[0].DnB_Rating_Description__c,
+            'STEP 12: D&B rating description should be stored on snapshot');
     }
 
     @isTest
@@ -538,22 +581,22 @@ static void testDiagnostic_accountInsert() {
 
     @isTest
 static void testStep12_eachRunCreatesNewSnapshot_notOverwrite() {
-    // Proves assessments are inserted not upserted
-    // Two separate transactions simulate two runs
+    // Proves assessments use insert not upsert:
+    // pre-insert one snapshot, run engine once, expect 2 total
     injectMockConfig();
     Test.setMock(HttpCalloutMock.class, new SuccessMock());
     Account acc = createTestAccount(DUNS);
 
-    // First run — own transaction
-    Test.startTest();
-    DnbCreditEngine.run(acc.Id, SCENARIO_KEY);
-    Test.stopTest();
+    // Simulate a prior run by inserting a snapshot directly
+    Credit_Assessment__c priorSnap = new Credit_Assessment__c(
+        Account__c          = acc.Id,
+        DUNS__c             = DUNS,
+        Assesment_Type__c   = 'Initial',
+        Assessment_Date__c  = System.now(),
+        Appear_Credit_Rating__c = 'GREEN_Very_Low_Risk'
+    );
+    insert priorSnap;
 
-    // Inject again as mockConfig resets between test boundaries
-    injectMockConfig();
-    Test.setMock(HttpCalloutMock.class, new SuccessMock());
-
-    // Second run — own transaction
     Test.startTest();
     DnbCreditEngine.run(acc.Id, SCENARIO_KEY);
     Test.stopTest();
@@ -563,7 +606,7 @@ static void testStep12_eachRunCreatesNewSnapshot_notOverwrite() {
         WHERE Account__c = :acc.Id
     ];
     System.assertEquals(2, assessments.size(),
-        'Each run should append a new snapshot independently');
+        'Each run should append a new snapshot, not overwrite the prior one');
 }
 
     // ─────────────────────────────────────────
