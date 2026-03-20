@@ -33,26 +33,26 @@ public with sharing class DnbCreditEvaluator {
             return;
         }
 
-        if (finalScore >= 80) {
+        if (finalScore >= 81) {
             data.appearCreditRating = 'GREEN_Very_Low_Risk';
             data.ratingReason = 'Very low risk based on weighted DNB score and FSI';
             return;
         }
 
-        if (finalScore >= 60) {
+        if (finalScore >= 61) {
             data.appearCreditRating = 'GREEN_Low_Risk';
             data.ratingReason = 'Low risk based on weighted DNB score and FSI';
             return;
         }
 
-        if (finalScore >= 40) {
+        if (finalScore >= 41) {
             data.appearCreditRating = 'AMBER_Moderate_Risk';
             data.ratingReason = 'Moderate risk based on weighted DNB score and FSI';
             return;
         }
 
-        if (finalScore >= 20) {
-            data.appearCreditRating = 'AMBER_Elevated_Risk';
+        if (finalScore >= 21) {
+            data.appearCreditRating = 'RED_Elevated_Risk';
             data.ratingReason = 'Elevated risk based on weighted DNB score and FSI';
             return;
         }

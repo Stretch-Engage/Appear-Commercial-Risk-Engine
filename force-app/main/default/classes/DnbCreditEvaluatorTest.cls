@@ -167,9 +167,9 @@ private class DnbCreditEvaluatorTest {
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals('AMBER_Elevated_Risk',
+        System.assertEquals('RED_Elevated_Risk',
             result.appearCreditRating,
-            'finalScore 32.5 should be AMBER_Elevated_Risk');
+            'finalScore 32.5 should be RED_Elevated_Risk');
         System.assertEquals('Elevated risk based on weighted DNB score and FSI',
             result.ratingReason);
     }
@@ -231,9 +231,9 @@ private class DnbCreditEvaluatorTest {
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals('AMBER_Elevated_Risk',
+        System.assertEquals('RED_Elevated_Risk',
             result.appearCreditRating,
-            'finalScore 21.25 should be AMBER_Elevated_Risk');
+            'finalScore 21.25 should be RED_Elevated_Risk');
     }
 
     @isTest
