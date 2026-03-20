@@ -29,13 +29,12 @@ public with sharing class DnbCreditEngine {
                 'Block group for scenario is not active: ' + scenarioKey
             );
         }
-  
 
         String blockGroupName = config.DeveloperName;
 
         // Query Account
         Account acc = [
-            SELECT Id, Name, DUNs_Number__c,BillingCountryCode
+            SELECT Id, Name, DUNs_Number__c, BillingCountryCode
             FROM Account
             WHERE Id = :accountId
             LIMIT 1
@@ -59,7 +58,7 @@ public with sharing class DnbCreditEngine {
         // Evaluate
         DnbCreditEvaluator.evaluate(result);
 
-        // Update Account 
+        // Update Account
         acc.Appear_Credit_Rating__c = result.appearCreditRating;
         acc.DnB_Rating_Reason__c = result.ratingReason;
         acc.DnB_Last_Refresh_Date__c = System.now();
@@ -68,10 +67,16 @@ public with sharing class DnbCreditEngine {
         acc.DnB_Recommended_Maximum_Credit__c = String.valueOf(result.creditLimit);
         acc.Appear_Rating_Reason__c = result.ratingReason;
         acc.CCA__c = result.compositeScore;
+        acc.Failure_Score_Percentile__c = result.failureScorePercentile;
+        acc.Delinquency_Score__c = result.delinquencyScoreClass;
+        acc.Recommended_Credit_Currency__c = result.creditLimitCurrency;
+        acc.DnB_Failure_Score_Description__c = result.failureScoreDescription;
+        acc.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription;
+        acc.DnB_Rating_Description__c = result.dnbRatingDescription;
 
         update acc;
 
-        // Insert Credit Assessment Snapshot 
+        // Insert Credit Assessment Snapshot
         Credit_Assessment__c assessment = new Credit_Assessment__c();
         assessment.Account__c = acc.Id;
         assessment.DUNS__c = acc.DUNs_Number__c;
@@ -83,12 +88,14 @@ public with sharing class DnbCreditEngine {
         assessment.Appear_Credit_Rating__c = result.appearCreditRating;
         assessment.Rating_Reason__c = result.ratingReason;
         assessment.DnB_Transaction_Id__c = result.transactionId;
+        assessment.DnB_Failure_Score_Description__c = result.failureScoreDescription;
+        assessment.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription;
+        assessment.DnB_Rating_Description__c = result.dnbRatingDescription;
 
         insert assessment;
-
-
     }
-      private static Dnb_Block_Group__mdt queryBlockGroup(String scenarioKey) {
+
+    private static Dnb_Block_Group__mdt queryBlockGroup(String scenarioKey) {
         try {
             return [
                 SELECT DeveloperName, Active__c
