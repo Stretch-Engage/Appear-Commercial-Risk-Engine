@@ -1,4 +1,6 @@
 public with sharing class DnbMassUpdateScheduler implements Schedulable {
+     @TestVisible
+    private static Boolean mockJobAlreadyRunning = false;
 
     public void execute(SchedulableContext sc) {
 
