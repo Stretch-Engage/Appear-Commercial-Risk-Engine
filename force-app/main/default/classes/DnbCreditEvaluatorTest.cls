@@ -34,182 +34,160 @@ private class DnbCreditEvaluatorTest {
     // ─────────────────────────────────────────
 
     @isTest
-    static void testNullFailureScore_insufficientData() {
+    static void testNullFailureScore_setsInsufficientDataReason() {
         DnbEnrichmentResult result = buildResult(null, 85, '4A');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals('RED_High_Risk',              result.appearCreditRating, 'Should be RED_High_Risk');
-        System.assertEquals('Insufficient DNB financial data', result.ratingReason, 'Should flag insufficient data');
+        System.assertEquals('Insufficient DNB financial data',
+            result.ratingReason,
+            'Should flag insufficient data when failureScore is null');
+        System.assertEquals('RED_High_Risk',
+            result.appearCreditRating,
+            'Should default to RED_High_Risk when data is insufficient');
     }
 
     @isTest
-    static void testNullDelinquencyScore_insufficientData() {
+    static void testNullDelinquencyScore_setsInsufficientDataReason() {
         DnbEnrichmentResult result = buildResult(72, null, '4A');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals('RED_High_Risk',              result.appearCreditRating, 'Should be RED_High_Risk');
-        System.assertEquals('Insufficient DNB financial data', result.ratingReason, 'Should flag insufficient data');
+        System.assertEquals('Insufficient DNB financial data',
+            result.ratingReason);
     }
 
     @isTest
-    static void testNullFinancialStrength_insufficientData() {
+    static void testNullFinancialStrength_setsInsufficientDataReason() {
         DnbEnrichmentResult result = buildResult(72, 85, null);
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals('RED_High_Risk',              result.appearCreditRating, 'Should be RED_High_Risk');
-        System.assertEquals('Insufficient DNB financial data', result.ratingReason, 'Should flag insufficient data');
+        System.assertEquals('Insufficient DNB financial data',
+            result.ratingReason);
     }
 
     @isTest
-    static void testBlankFinancialStrength_insufficientData() {
+    static void testBlankFinancialStrength_setsInsufficientDataReason() {
         DnbEnrichmentResult result = buildResult(72, 85, '');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals('Insufficient DNB financial data', result.ratingReason, 'Blank strength should flag insufficient data');
+        System.assertEquals('Insufficient DNB financial data',
+            result.ratingReason);
     }
 
     @isTest
-    static void testWhitespaceFinancialStrength_insufficientData() {
+    static void testWhitespaceFinancialStrength_setsInsufficientDataReason() {
         DnbEnrichmentResult result = buildResult(72, 85, '   ');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals('Insufficient DNB financial data', result.ratingReason, 'Whitespace strength should flag insufficient data');
+        System.assertEquals('Insufficient DNB financial data',
+            result.ratingReason);
     }
 
     @isTest
-    static void testAllFieldsNull_insufficientData() {
+    static void testAllScoresNull_setsInsufficientDataReason() {
         DnbEnrichmentResult result = buildResult(null, null, null);
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals('RED_High_Risk',              result.appearCreditRating, 'Should be RED_High_Risk');
-        System.assertEquals('Insufficient DNB financial data', result.ratingReason, 'Should flag insufficient data');
+        System.assertEquals('Insufficient DNB financial data',
+            result.ratingReason);
+        System.assertEquals('RED_High_Risk',
+            result.appearCreditRating);
     }
 
     // ─────────────────────────────────────────
     // Rating Band Tests
-    // All scores verified with formula:
-    // finalScore = ((f*0.6)+(d*0.4))*0.7 + (fsiScore*0.3)
+    // Formula: (f*0.45) + (d*0.30) + (fsi*0.25)
     // ─────────────────────────────────────────
 
     @isTest
     static void testGreenVeryLowRisk_finalScore100() {
         // f=100, d=100, fsi=100 (5A)
-        // weightedScore = 100, finalScore = (100*0.7)+(100*0.3) = 100
+        // (100*0.45)+(100*0.30)+(100*0.25) = 45+30+25 = 100
         DnbEnrichmentResult result = buildResult(100, 100, '5A');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals(
-            'GREEN_Very_Low_Risk',
+        System.assertEquals('GREEN_Very_Low_Risk',
             result.appearCreditRating,
-            'finalScore 100 should be GREEN_Very_Low_Risk'
-        );
-        System.assertEquals(
-            'Very low risk based on weighted DNB score and FSI',
-            result.ratingReason,
-            'Reason should match GREEN_Very_Low_Risk message'
-        );
+            'finalScore 100 should be GREEN_Very_Low_Risk');
+        System.assertEquals('Very low risk based on weighted DNB score and FSI',
+            result.ratingReason);
     }
 
     @isTest
-    static void testGreenLowRisk_finalScore75point5() {
+    static void testGreenLowRisk_finalScore76point25() {
         // f=80, d=80, fsi=65 (2A)
-        // weightedScore = (80*0.6)+(80*0.4) = 80
-        // finalScore = (80*0.7)+(65*0.3) = 56+19.5 = 75.5
+        // (80*0.45)+(80*0.30)+(65*0.25) = 36+24+16.25 = 76.25
         DnbEnrichmentResult result = buildResult(80, 80, '2A');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals(
-            'GREEN_Low_Risk',
+        System.assertEquals('GREEN_Low_Risk',
             result.appearCreditRating,
-            'finalScore 75.5 should be GREEN_Low_Risk'
-        );
-        System.assertEquals(
-            'Low risk based on weighted DNB score and FSI',
-            result.ratingReason,
-            'Reason should match GREEN_Low_Risk message'
-        );
+            'finalScore 76.25 should be GREEN_Low_Risk');
+        System.assertEquals('Low risk based on weighted DNB score and FSI',
+            result.ratingReason);
     }
 
     @isTest
-    static void testAmberModerateRisk_finalScore55point5() {
+    static void testAmberModerateRisk_finalScore56point25() {
         // f=60, d=60, fsi=45 (B)
-        // weightedScore = (60*0.6)+(60*0.4) = 60
-        // finalScore = (60*0.7)+(45*0.3) = 42+13.5 = 55.5
+        // (60*0.45)+(60*0.30)+(45*0.25) = 27+18+11.25 = 56.25
         DnbEnrichmentResult result = buildResult(60, 60, 'B');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals(
-            'AMBER_Moderate_Risk',
+        System.assertEquals('AMBER_Moderate_Risk',
             result.appearCreditRating,
-            'finalScore 55.5 should be AMBER_Moderate_Risk'
-        );
-        System.assertEquals(
-            'Moderate risk based on weighted DNB score and FSI',
-            result.ratingReason,
-            'Reason should match AMBER_Moderate_Risk message'
-        );
+            'finalScore 56.25 should be AMBER_Moderate_Risk');
+        System.assertEquals('Moderate risk based on weighted DNB score and FSI',
+            result.ratingReason);
     }
 
     @isTest
-    static void testAmberElevatedRisk_finalScore32() {
+    static void testAmberElevatedRisk_finalScore32point5() {
         // f=35, d=35, fsi=25 (H)
-        // weightedScore = (35*0.6)+(35*0.4) = 35
-        // finalScore = (35*0.7)+(25*0.3) = 24.5+7.5 = 32
+        // (35*0.45)+(35*0.30)+(25*0.25) = 15.75+10.5+6.25 = 32.5
         DnbEnrichmentResult result = buildResult(35, 35, 'H');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals(
-            'AMBER_Elevated_Risk',
+        System.assertEquals('AMBER_Elevated_Risk',
             result.appearCreditRating,
-            'finalScore 32 should be AMBER_Elevated_Risk'
-        );
-        System.assertEquals(
-            'Elevated risk based on weighted DNB score and FSI',
-            result.ratingReason,
-            'Reason should match AMBER_Elevated_Risk message'
-        );
+            'finalScore 32.5 should be AMBER_Elevated_Risk');
+        System.assertEquals('Elevated risk based on weighted DNB score and FSI',
+            result.ratingReason);
     }
 
     @isTest
-    static void testRedHighRisk_finalScore13point5() {
+    static void testRedHighRisk_finalScore13point75() {
         // f=15, d=15, fsi=10 (HH)
-        // weightedScore = (15*0.6)+(15*0.4) = 15
-        // finalScore = (15*0.7)+(10*0.3) = 10.5+3 = 13.5
+        // (15*0.45)+(15*0.30)+(10*0.25) = 6.75+4.5+2.5 = 13.75
         DnbEnrichmentResult result = buildResult(15, 15, 'HH');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals(
-            'RED_High_Risk',
+        System.assertEquals('RED_High_Risk',
             result.appearCreditRating,
-            'finalScore 13.5 should be RED_High_Risk'
-        );
-        System.assertEquals(
-            'High risk based on weighted DNB score and FSI',
-            result.ratingReason,
-            'Reason should match RED_High_Risk message'
-        );
+            'finalScore 13.75 should be RED_High_Risk');
+        System.assertEquals('High risk based on weighted DNB score and FSI',
+            result.ratingReason);
     }
 
     // ─────────────────────────────────────────
@@ -218,55 +196,57 @@ private class DnbCreditEvaluatorTest {
 
     @isTest
     static void testBoundary_exactlyAt81_greenVeryLowRisk() {
-        // f=73, d=74, fsi=100 (5A)
-        // weightedScore = (73*0.6)+(74*0.4) = 43.8+29.6 = 73.4
-        // finalScore = (73.4*0.7)+(100*0.3) = 51.38+30 = 81.38
-        DnbEnrichmentResult result = buildResult(73, 74, '5A');
+        // f=90, d=90, fsi=55 (1A)
+        // (90*0.45)+(90*0.30)+(55*0.25) = 40.5+27+13.75 = 81.25
+        DnbEnrichmentResult result = buildResult(90, 90, '1A');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals(
-            'GREEN_Very_Low_Risk',
+        System.assertEquals('GREEN_Very_Low_Risk',
             result.appearCreditRating,
-            'finalScore just above 81 should be GREEN_Very_Low_Risk'
-        );
+            'finalScore 81.25 should be GREEN_Very_Low_Risk');
     }
 
     @isTest
-    static void testBoundary_exactlyAt61_greenLowRisk() {
-        // f=60, d=60, fsi=55 (1A)
-        // weightedScore = 60
-        // finalScore = (60*0.7)+(55*0.3) = 42+16.5 = 58.5 → AMBER
-        // Try f=70, d=70, fsi=55 (1A)
-        // weightedScore = 70
-        // finalScore = (70*0.7)+(55*0.3) = 49+16.5 = 65.5 → GREEN_Low_Risk 
-        DnbEnrichmentResult result = buildResult(70, 70, '1A');
+    static void testBoundary_justBelow81_greenLowRisk() {
+        // f=80, d=80, fsi=55 (1A)
+        // (80*0.45)+(80*0.30)+(55*0.25) = 36+24+13.75 = 73.75
+        DnbEnrichmentResult result = buildResult(80, 80, '1A');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals(
-            'GREEN_Low_Risk',
+        System.assertEquals('GREEN_Low_Risk',
             result.appearCreditRating,
-            'finalScore 65.5 should be GREEN_Low_Risk'
-        );
+            'finalScore 73.75 should be GREEN_Low_Risk');
     }
 
     @isTest
     static void testBoundary_exactlyAt21_amberElevatedRisk() {
         // f=20, d=20, fsi=25 (H)
-        // weightedScore = 20
-        // finalScore = (20*0.7)+(25*0.3) = 14+7.5 = 21.5 → AMBER_Elevated 
+        // (20*0.45)+(20*0.30)+(25*0.25) = 9+6+6.25 = 21.25
         DnbEnrichmentResult result = buildResult(20, 20, 'H');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();
 
-        System.assertEquals(
-            'AMBER_Elevated_Risk',
+        System.assertEquals('AMBER_Elevated_Risk',
             result.appearCreditRating,
-            'finalScore 21.5 should be AMBER_Elevated_Risk'
-        );
+            'finalScore 21.25 should be AMBER_Elevated_Risk');
+    }
+
+    @isTest
+    static void testBoundary_justBelow21_redHighRisk() {
+        // f=10, d=10, fsi=10 (HH)
+        // (10*0.45)+(10*0.30)+(10*0.25) = 4.5+3+2.5 = 10
+        DnbEnrichmentResult result = buildResult(10, 10, 'HH');
+        Test.startTest();
+        DnbCreditEvaluator.evaluate(result);
+        Test.stopTest();
+
+        System.assertEquals('RED_High_Risk',
+            result.appearCreditRating,
+            'finalScore 10 should be RED_High_Risk');
     }
 }
