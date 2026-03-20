@@ -24,11 +24,17 @@ private class DnbEnrichmentResultTest {
         System.assertEquals(null, result.postalCode,             'postalCode should default to null');
 
         // Credit fields
-        System.assertEquals(null, result.financialStrength,      'financialStrength should default to null');
-        System.assertEquals(null, result.failureScorePercentile, 'failureScorePercentile should default to null');
-        System.assertEquals(null, result.delinquencyScoreClass,  'delinquencyScoreClass should default to null');
-        System.assertEquals(null, result.creditLimit,            'creditLimit should default to null');
-        System.assertEquals(null, result.compositeScore,         'compositeScore should default to null');
+        System.assertEquals(null, result.financialStrength,          'financialStrength should default to null');
+        System.assertEquals(null, result.failureScorePercentile,     'failureScorePercentile should default to null');
+        System.assertEquals(null, result.delinquencyScoreClass,      'delinquencyScoreClass should default to null');
+        System.assertEquals(null, result.creditLimit,                'creditLimit should default to null');
+        System.assertEquals(null, result.compositeScore,             'compositeScore should default to null');
+        System.assertEquals(null, result.creditLimitCurrency,        'creditLimitCurrency should default to null');
+
+        // Score description fields
+        System.assertEquals(null, result.failureScoreDescription,    'failureScoreDescription should default to null');
+        System.assertEquals(null, result.delinquencyScoreDescription,'delinquencyScoreDescription should default to null');
+        System.assertEquals(null, result.dnbRatingDescription,       'dnbRatingDescription should default to null');
 
         // Legal fields
         System.assertEquals(false, result.hasOpenLiens,           'hasOpenLiens should default to false');
@@ -166,6 +172,25 @@ private class DnbEnrichmentResultTest {
             'Two instances should not share duns state');
         System.assertNotEquals(result1.appearCreditRating, result2.appearCreditRating,
             'Two instances should not share credit rating state');
+    }
+
+    // ─────────────────────────────────────────
+    // Score Description Field Tests
+    // ─────────────────────────────────────────
+
+    @isTest
+    static void testScoreDescriptionFields_assignAndRetrieveCorrectly() {
+        DnbEnrichmentResult result = new DnbEnrichmentResult();
+        result.failureScoreDescription     = 'Low to moderate risk of financial stress';
+        result.delinquencyScoreDescription = 'Low risk of severe payment delinquency';
+        result.dnbRatingDescription        = 'Strong financial profile; Active trading record';
+
+        System.assertEquals('Low to moderate risk of financial stress',
+            result.failureScoreDescription,     'Failure score description should match');
+        System.assertEquals('Low risk of severe payment delinquency',
+            result.delinquencyScoreDescription, 'Delinquency score description should match');
+        System.assertEquals('Strong financial profile; Active trading record',
+            result.dnbRatingDescription,        'D&B rating description should match');
     }
 
     // ─────────────────────────────────────────
