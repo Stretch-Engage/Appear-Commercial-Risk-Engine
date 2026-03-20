@@ -16,18 +16,25 @@ private class DnbParserTest {
                 '"countryISOAlpha2Code": "US",' +
                 '"dnbAssessment": {' +
                     '"failureScore": {' +
-                        '"nationalPercentile": 72' +
+                        '"nationalPercentile": 72,' +
+                        '"classScoreDescription": "Low to moderate risk of financial stress"' +
                     '},' +
                     '"delinquencyScore": {' +
-                        '"nationalPercentile": 85' +
+                        '"nationalPercentile": 85,' +
+                        '"classScoreDescription": "Low risk of severe payment delinquency"' +
                     '},' +
                     '"standardRating": {' +
                         '"financialStrength": "4A",' +
-                        '"rating": "2"' +
+                        '"rating": "2",' +
+                        '"ratingReason": [' +
+                            '{"description": "Strong financial profile"},' +
+                            '{"description": "Active trading record"}' +
+                        ']' +
                     '},' +
                     '"creditLimitRecommendation": {' +
                         '"maximumRecommendedLimit": {' +
-                            '"value": 150000' +
+                            '"value": 150000,' +
+                            '"currency": "USD"' +
                         '}' +
                     '}' +
                 '}' +
@@ -112,6 +119,10 @@ private class DnbParserTest {
         System.assertEquals(150000, result.creditLimit, 'Credit limit mismatch');
         System.assertEquals('2', result.compositeScore, 'Composite score mismatch');
         System.assertEquals('TXN-185520819-001', result.transactionId, 'Transaction ID mismatch');
+        System.assertEquals('Low to moderate risk of financial stress', result.failureScoreDescription, 'Failure score description mismatch');
+        System.assertEquals('Low risk of severe payment delinquency', result.delinquencyScoreDescription, 'Delinquency score description mismatch');
+        System.assertEquals('Strong financial profile; Active trading record', result.dnbRatingDescription, 'D&B rating description mismatch');
+        System.assertEquals('USD', result.creditLimitCurrency, 'Credit limit currency mismatch');
     }
 
     @isTest
@@ -283,5 +294,58 @@ private class DnbParserTest {
         System.assertNotEquals(null, result, 'Result should not be null');
         System.assertEquals(null, result.duns, 'DUNS should be null');
         System.assertEquals(null, result.companyName, 'Company name should be null');
+    }
+
+    // ─────────────────────────────────────────
+    // Description Field Tests
+    // ─────────────────────────────────────────
+
+    @isTest
+    static void testEmptyRatingReason_dnbRatingDescriptionIsNull() {
+        String json =
+            '{"organization":{"duns":"185520819","dnbAssessment":{' +
+                '"standardRating":{"financialStrength":"4A","rating":"2","ratingReason":[]}' +
+            '}}}';
+
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(json);
+        Test.stopTest();
+
+        System.assertEquals(null, result.dnbRatingDescription,
+            'dnbRatingDescription should be null when ratingReason array is empty');
+    }
+
+    @isTest
+    static void testNullClassScoreDescription_fieldsAreNull() {
+        String json =
+            '{"organization":{"duns":"185520819","dnbAssessment":{' +
+                '"failureScore":{"nationalPercentile":50,"classScoreDescription":null},' +
+                '"delinquencyScore":{"nationalPercentile":60,"classScoreDescription":null}' +
+            '}}}';
+
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(json);
+        Test.stopTest();
+
+        System.assertEquals(null, result.failureScoreDescription,
+            'failureScoreDescription should be null when classScoreDescription is null');
+        System.assertEquals(null, result.delinquencyScoreDescription,
+            'delinquencyScoreDescription should be null when classScoreDescription is null');
+    }
+
+    @isTest
+    static void testSingleRatingReason_noTrailingSemicolon() {
+        String json =
+            '{"organization":{"duns":"185520819","dnbAssessment":{' +
+                '"standardRating":{"financialStrength":"4A","rating":"2",' +
+                    '"ratingReason":[{"description":"Strong financial profile"}]}' +
+            '}}}';
+
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(json);
+        Test.stopTest();
+
+        System.assertEquals('Strong financial profile', result.dnbRatingDescription,
+            'Single ratingReason should not have trailing semicolon');
     }
 }

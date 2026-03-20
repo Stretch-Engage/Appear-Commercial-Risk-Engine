@@ -32,6 +32,8 @@ public with sharing class DnbParser {
             if (failureScore != null) {
                 result.failureScorePercentile =
                     (Decimal) failureScore.get('nationalPercentile');
+                result.failureScoreDescription =
+                    (String) failureScore.get('classScoreDescription');
             }
 
             // Delinquency Score
@@ -41,8 +43,10 @@ public with sharing class DnbParser {
             if (delinquencyScore != null) {
                 result.delinquencyScoreClass =
                     (Decimal) delinquencyScore.get('nationalPercentile');
+                result.delinquencyScoreDescription =
+                    (String) delinquencyScore.get('classScoreDescription');
             }
-            
+
             // Standard Rating
             Map<String, Object> standardRating =
                 (Map<String, Object>) assessment.get('standardRating');
@@ -50,6 +54,21 @@ public with sharing class DnbParser {
             if (standardRating != null) {
                 result.financialStrength =
                     (String) standardRating.get('financialStrength');
+
+                List<Object> ratingReasons =
+                    (List<Object>) standardRating.get('ratingReason');
+
+                if (ratingReasons != null && !ratingReasons.isEmpty()) {
+                    List<String> descriptions = new List<String>();
+                    for (Object item : ratingReasons) {
+                        Map<String, Object> reason = (Map<String, Object>) item;
+                        String reasonText = (String) reason.get('description');
+                        if (String.isNotBlank(reasonText)) {
+                            descriptions.add(reasonText);
+                        }
+                    }
+                    result.dnbRatingDescription = String.join(descriptions, '; ');
+                }
             }
 
             // Credit Limit
@@ -63,9 +82,14 @@ public with sharing class DnbParser {
                 if (maxLimit != null) {
                     result.creditLimit =
                         (Decimal) maxLimit.get('value');
+
+                    // Credit Limit Currency
+                    result.creditLimitCurrency =
+                        (String) maxLimit.get('currency');
                 }
             }
-            
+
+
             // Composite Score
             Map<String, Object> compositeScore =
                 (Map<String, Object>) assessment.get('standardRating');
