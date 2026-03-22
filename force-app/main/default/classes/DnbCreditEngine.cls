@@ -59,38 +59,38 @@ public with sharing class DnbCreditEngine {
         DnbCreditEvaluator.evaluate(result);
 
         // Update Account
-        acc.Appear_Credit_Rating__c = result.appearCreditRating;
-        acc.DnB_Rating_Reason__c = result.ratingReason;
+        acc.Appear_Credit_Rating__c = result.appearCreditRating != null ? result.appearCreditRating : 'No rating assigned';
+        acc.DnB_Rating_Reason__c = result.ratingReason != null ? result.ratingReason : 'No rating reason provided';
         acc.DnB_Last_Refresh_Date__c = System.now();
-        acc.DnB_Financial_Strength__c = result.financialStrength;
-        acc.DnB_Last_Transaction_ID__c = result.transactionId;
-        acc.DnB_Recommended_Maximum_Credit__c = String.valueOf(result.creditLimit);
-        acc.Appear_Rating_Reason__c = result.ratingReason;
-        acc.CCA__c = result.compositeScore;
+        acc.DnB_Financial_Strength__c = result.financialStrength != null ? result.financialStrength : 'No financial strength data';
+        acc.DnB_Last_Transaction_ID__c = result.transactionId != null ? result.transactionId : 'No transaction ID';
+        acc.DnB_Recommended_Maximum_Credit__c = String.valueOf(result.creditLimit) + ' ' + (result.creditLimitCurrency != null ? result.creditLimitCurrency : 'USD');
+        acc.Appear_Rating_Reason__c = result.ratingReason != null ? result.ratingReason : 'No rating reason provided';
+        acc.CCA__c = result.compositeScore != null ? result.compositeScore : 'No composite score';
         acc.Failure_Score_Percentile__c = result.failureScorePercentile;
         acc.Delinquency_Score__c = result.delinquencyScoreClass;
-        acc.Recommended_Credit_Currency__c = result.creditLimitCurrency;
-        acc.DnB_Failure_Score_Description__c = result.failureScoreDescription;
-        acc.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription;
-        acc.DnB_Rating_Description__c = result.dnbRatingDescription;
+        acc.Recommended_Credit_Currency__c = result.creditLimitCurrency != null ? result.creditLimitCurrency : ' USD Set by default';
+        acc.DnB_Failure_Score_Description__c = result.failureScoreDescription != null ? result.failureScoreDescription : 'No data available';
+        acc.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription != null ? result.delinquencyScoreDescription : 'No data available';
+        acc.DnB_Rating_Description__c = result.dnbRatingDescription != null ? result.dnbRatingDescription : 'No data available';
 
         update acc;
 
         // Insert Credit Assessment Snapshot
         Credit_Assessment__c assessment = new Credit_Assessment__c();
-        assessment.Account__c = acc.Id;
+        assessment.Account__c = acc.Id ;
         assessment.DUNS__c = acc.DUNs_Number__c;
         assessment.Assesment_Type__c = 'Initial';
         assessment.Assessment_Date__c = System.now();
         assessment.Failure_Score_Percentile__c = result.failureScorePercentile;
         assessment.Deliquency_Score__c = result.delinquencyScoreClass;
-        assessment.Financial_Strength__c = result.financialStrength;
-        assessment.Appear_Credit_Rating__c = result.appearCreditRating;
-        assessment.Rating_Reason__c = result.ratingReason;
-        assessment.DnB_Transaction_Id__c = result.transactionId;
-        assessment.DnB_Failure_Score_Description__c = result.failureScoreDescription;
-        assessment.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription;
-        assessment.DnB_Rating_Description__c = result.dnbRatingDescription;
+        assessment.Financial_Strength__c = result.financialStrength != null ? result.financialStrength : 'No financial strength data';
+        assessment.Appear_Credit_Rating__c = result.appearCreditRating != null ? result.appearCreditRating : 'No rating assigned';
+        assessment.Rating_Reason__c = result.ratingReason != null ? result.ratingReason : 'No rating reason provided';
+        assessment.DnB_Transaction_Id__c = result.transactionId != null ? result.transactionId : 'No transaction ID';
+        assessment.DnB_Failure_Score_Description__c = result.failureScoreDescription != null ? result.failureScoreDescription : 'No data available';
+        assessment.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription != null ? result.delinquencyScoreDescription : 'No data available';
+        assessment.DnB_Rating_Description__c = result.dnbRatingDescription != null ? result.dnbRatingDescription : 'No data available';
 
         insert assessment;
     }
