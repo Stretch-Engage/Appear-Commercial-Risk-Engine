@@ -59,13 +59,13 @@ public with sharing class DnbCreditEngine {
         DnbCreditEvaluator.evaluate(result);
 
         // Update Account
-        acc.Appear_Credit_Rating__c = result.appearCreditRating != null ? result.appearCreditRating : 'No rating assigned';
+        acc.Appear_Credit_Rating__c = result.appearCreditRating;
         acc.DnB_Rating_Reason__c = result.ratingReason != null ? result.ratingReason : 'No rating reason provided';
         acc.DnB_Last_Refresh_Date__c = System.now();
         acc.DnB_Financial_Strength__c = result.financialStrength != null ? result.financialStrength : 'No financial strength data';
         acc.DnB_Last_Transaction_ID__c = result.transactionId != null ? result.transactionId : 'No transaction ID';
         acc.DnB_Recommended_Maximum_Credit__c = String.valueOf(result.creditLimit) + ' ' + (result.creditLimitCurrency != null ? result.creditLimitCurrency : 'USD');
-        acc.Appear_Rating_Reason__c = result.ratingReason != null ? result.ratingReason : 'No rating reason provided';
+        acc.Appear_Rating_Reason__c = result.ratingReason;
         acc.CCA__c = result.compositeScore != null ? result.compositeScore : 'No composite score';
         acc.Failure_Score_Percentile__c = result.failureScorePercentile;
         acc.Delinquency_Score__c = result.delinquencyScoreClass;
@@ -85,8 +85,8 @@ public with sharing class DnbCreditEngine {
         assessment.Failure_Score_Percentile__c = result.failureScorePercentile;
         assessment.Deliquency_Score__c = result.delinquencyScoreClass;
         assessment.Financial_Strength__c = result.financialStrength != null ? result.financialStrength : 'No financial strength data';
-        assessment.Appear_Credit_Rating__c = result.appearCreditRating != null ? result.appearCreditRating : 'No rating assigned';
-        assessment.Rating_Reason__c = result.ratingReason != null ? result.ratingReason : 'No rating reason provided';
+        assessment.Appear_Credit_Rating__c = result.appearCreditRating;
+        assessment.Rating_Reason__c = result.ratingReason;
         assessment.DnB_Transaction_Id__c = result.transactionId != null ? result.transactionId : 'No transaction ID';
         assessment.DnB_Failure_Score_Description__c = result.failureScoreDescription != null ? result.failureScoreDescription : 'No data available';
         assessment.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription != null ? result.delinquencyScoreDescription : 'No data available';
