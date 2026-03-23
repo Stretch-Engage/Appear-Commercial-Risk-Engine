@@ -1,3 +1,12 @@
+/**
+ * DnbParser
+ * Parses the raw JSON response from the D&B API into a DnbEnrichmentResult.
+ * Uses untyped deserialisation and manually walks the response structure,
+ * so if D&B change a field name or nesting level this is the first place to look.
+ *
+ * @author Sidharrth Nandhakumar
+ * @date 23/03/2026
+ */
 public with sharing class DnbParser {
 
     public static DnbEnrichmentResult parse(String jsonString) {
@@ -10,22 +19,21 @@ public with sharing class DnbParser {
 
         DnbEnrichmentResult result = new DnbEnrichmentResult();
 
+        // Nothing to parse — return an empty result rather than throwing
         if (organization == null) {
             return result;
         }
 
-        // Basic Info
         result.duns = (String) organization.get('duns');
         result.companyName = (String) organization.get('primaryName');
         result.postalCode = (String) organization.get('countryISOAlpha2Code');
 
-        // dnbAssessment block
         Map<String, Object> assessment =
             (Map<String, Object>) organization.get('dnbAssessment');
 
         if (assessment != null) {
 
-            // Failure Score
+            // Failure Score — national percentile used as the scoring input
             Map<String, Object> failureScore =
                 (Map<String, Object>) assessment.get('failureScore');
 
@@ -36,7 +44,7 @@ public with sharing class DnbParser {
                     (String) failureScore.get('classScoreDescription');
             }
 
-            // Delinquency Score
+            // Delinquency Score — national percentile used as the scoring input
             Map<String, Object> delinquencyScore =
                 (Map<String, Object>) assessment.get('delinquencyScore');
 
@@ -47,7 +55,7 @@ public with sharing class DnbParser {
                     (String) delinquencyScore.get('classScoreDescription');
             }
 
-            // Standard Rating
+            // Standard Rating — source of the FSI code and rating reasons
             Map<String, Object> standardRating =
                 (Map<String, Object>) assessment.get('standardRating');
 
@@ -55,6 +63,7 @@ public with sharing class DnbParser {
                 result.financialStrength =
                     (String) standardRating.get('financialStrength');
 
+                // D&B can return multiple rating reasons — join them into one string
                 List<Object> ratingReasons =
                     (List<Object>) standardRating.get('ratingReason');
 
@@ -80,17 +89,12 @@ public with sharing class DnbParser {
                     (Map<String, Object>) creditLimit.get('maximumRecommendedLimit');
 
                 if (maxLimit != null) {
-                    result.creditLimit =
-                        (Decimal) maxLimit.get('value');
-
-                    // Credit Limit Currency
-                    result.creditLimitCurrency =
-                        (String) maxLimit.get('currency');
+                    result.creditLimit    = (Decimal) maxLimit.get('value');
+                    result.creditLimitCurrency = (String) maxLimit.get('currency');
                 }
             }
 
-
-            // Composite Score
+            // Composite Score — pulled from the same standardRating block as the FSI
             Map<String, Object> compositeScore =
                 (Map<String, Object>) assessment.get('standardRating');
             if (compositeScore != null) {
@@ -98,7 +102,7 @@ public with sharing class DnbParser {
                     (String) compositeScore.get('rating');
             }
 
-            // Transaction ID (root level)
+            // Transaction ID lives at the root of the payload, not inside organization
             Map<String, Object> transactionDetail =
                 (Map<String, Object>) payload.get('transactionDetail');
 

@@ -1,5 +1,19 @@
+/**
+ * DnbService
+ * Handles the outbound HTTP callout to the D&B Direct+ API.
+ * The Named Credential 'DNB_Direct_Plus' manages authentication,
+ * so no tokens or secrets are handled here.
+ *
+ * @author Sidharrth Nandhakumar
+ * @date 23/03/2026
+ */
 public with sharing class DnbService {
 
+    /**
+     * Fetches company data from D&B for the given DUNS number.
+     * The block IDs to request are driven by the block group metadata record,
+     * keeping the data blocks configurable without a code change.
+     */
     public static String fetchCompanyData(String duns, String blockGroupName, String countryCode) {
 
         if (String.isBlank(duns)) {
@@ -24,14 +38,14 @@ public with sharing class DnbService {
                           '?blockIDs=' +
                           EncodingUtil.urlEncode(blockIds, 'UTF-8');
 
-                 // Germany-specific parameters
-                if (countryCode != null && countryCode == 'DE') {
-                    endpoint +=
-                        '&tradeUp=hq' +
-                        '&customerReference=' +
-                        EncodingUtil.urlEncode('SF-' + duns, 'UTF-8') +
-                        '&orderReason=6332';
-                }
+        // Germany requires extra query params per D&B's regional data agreement
+        if (countryCode != null && countryCode == 'DE') {
+            endpoint +=
+                '&tradeUp=hq' +
+                '&customerReference=' +
+                EncodingUtil.urlEncode('SF-' + duns, 'UTF-8') +
+                '&orderReason=6332';
+        }
 
         req.setEndpoint(endpoint);
         req.setMethod('GET');

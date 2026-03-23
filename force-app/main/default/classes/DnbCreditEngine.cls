@@ -1,6 +1,19 @@
+/**
+ * DnbCreditEngine
+ * Main entry point for running a D&B credit assessment on an Account.
+ * Pulls company data from D&B, evaluates it, and writes the results back
+ * to the Account along with a Credit Assessment snapshot.
+ *
+ * @author Sidharrth Nandhakumar
+ * @date 23/03/2026
+ */
 public with sharing class DnbCreditEngine {
     @TestVisible private static Dnb_Block_Group__mdt mockConfig = null;
 
+    /**
+     * Runs a full credit assessment for the given account under the specified scenario.
+     * The scenarioKey determines which D&B block group (data blocks) to request.
+     */
     public static void run(
         Id accountId,
         String scenarioKey
@@ -44,21 +57,21 @@ public with sharing class DnbCreditEngine {
             throw new IllegalArgumentException('Account does not have a DUNS number');
         }
 
-        // Fetch DNB Data
+        // Hit the D&B API and get back the raw JSON payload
         String json = DnbService.fetchCompanyData(
             acc.DUNs_Number__c,
             blockGroupName,
             acc.BillingCountryCode
         );
 
-        // Parse
+        // Parse the raw JSON into a structured result object
         DnbEnrichmentResult result =
             DnbParser.parse(json);
 
-        // Evaluate
+        // Run scoring logic to determine the Appear credit rating
         DnbCreditEvaluator.evaluate(result);
 
-        // Update Account
+        // Write all D&B scores and ratings back onto the Account
         acc.Appear_Credit_Rating__c = result.appearCreditRating;
         acc.DnB_Rating_Reason__c = result.ratingReason != null ? result.ratingReason : 'No rating reason provided';
         acc.DnB_Last_Refresh_Date__c = System.now();
@@ -76,7 +89,7 @@ public with sharing class DnbCreditEngine {
 
         update acc;
 
-        // Insert Credit Assessment Snapshot
+        // Snapshot the assessment so we have a history of every time this ran
         Credit_Assessment__c assessment = new Credit_Assessment__c();
         assessment.Account__c = acc.Id ;
         assessment.DUNS__c = acc.DUNs_Number__c;
@@ -95,6 +108,8 @@ public with sharing class DnbCreditEngine {
         insert assessment;
     }
 
+    // Looks up the block group metadata for a given scenario key.
+    // Throws if nothing is found rather than returning null silently.
     private static Dnb_Block_Group__mdt queryBlockGroup(String scenarioKey) {
         try {
             return [
