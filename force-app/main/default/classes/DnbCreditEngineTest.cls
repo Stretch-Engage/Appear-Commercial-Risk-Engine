@@ -455,7 +455,7 @@ static void testDiagnostic_accountInsert() {
             updated.DnB_Last_Transaction_ID__c,
             'STEP 11: transaction ID should match mock'
         );
-        System.assertEquals('250000',
+        System.assertEquals('250000 USD',
             updated.DnB_Recommended_Maximum_Credit__c,
             'STEP 11: credit limit should match mock'
         );
