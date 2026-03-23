@@ -67,8 +67,8 @@ public with sharing class DnbCreditEngine {
         acc.DnB_Recommended_Maximum_Credit__c = String.valueOf(result.creditLimit) + ' ' + (result.creditLimitCurrency != null ? result.creditLimitCurrency : 'USD');
         acc.Appear_Rating_Reason__c = result.ratingReason;
         acc.CCA__c = result.compositeScore != null ? result.compositeScore : 'No composite score';
-        acc.Failure_Score_Percentile__c = result.failureScorePercentile;
-        acc.Delinquency_Score__c = result.delinquencyScoreClass;
+        acc.Failure_Score_Percentile__c = result.failureScorePercentile != null ? result.failureScorePercentile : 0;
+        acc.Delinquency_Score__c = result.delinquencyScoreClass != null ? result.delinquencyScoreClass : 0;
         acc.Recommended_Credit_Currency__c = result.creditLimitCurrency != null ? result.creditLimitCurrency : ' USD Set by default';
         acc.DnB_Failure_Score_Description__c = result.failureScoreDescription != null ? result.failureScoreDescription : 'No data available';
         acc.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription != null ? result.delinquencyScoreDescription : 'No data available';
@@ -82,8 +82,8 @@ public with sharing class DnbCreditEngine {
         assessment.DUNS__c = acc.DUNs_Number__c;
         assessment.Assesment_Type__c = 'Initial';
         assessment.Assessment_Date__c = System.now();
-        assessment.Failure_Score_Percentile__c = result.failureScorePercentile;
-        assessment.Deliquency_Score__c = result.delinquencyScoreClass;
+        assessment.Failure_Score_Percentile__c = result.failureScorePercentile != null ? result.failureScorePercentile : 0;
+        assessment.Deliquency_Score__c = result.delinquencyScoreClass != null ? result.delinquencyScoreClass : 0;
         assessment.Financial_Strength__c = result.financialStrength != null ? result.financialStrength : 'No financial strength data';
         assessment.Appear_Credit_Rating__c = result.appearCreditRating;
         assessment.Rating_Reason__c = result.ratingReason;

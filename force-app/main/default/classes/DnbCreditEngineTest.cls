@@ -472,7 +472,7 @@ static void testDiagnostic_accountInsert() {
             updated.Appear_Rating_Reason__c,
             'STEP 11: Appear_Rating_Reason__c should mirror DnB_Rating_Reason__c'
         );
-        System.assertEquals(100,
+       System.assertEquals(100,
             updated.Failure_Score_Percentile__c,
             'STEP 11: failure score percentile should match mock');
         System.assertEquals(100,
@@ -533,7 +533,7 @@ static void testDiagnostic_accountInsert() {
         System.assertEquals('Initial', assessments[0].Assesment_Type__c,
             'STEP 12: type should be Initial');
         System.assertEquals(100,       assessments[0].Failure_Score_Percentile__c,
-            'STEP 12: failure score should match mock');
+           'STEP 12: failure score should match mock');
         System.assertEquals(100,       assessments[0].Deliquency_Score__c,
             'STEP 12: delinquency score should match mock');
         System.assertEquals('5A',      assessments[0].Financial_Strength__c,
