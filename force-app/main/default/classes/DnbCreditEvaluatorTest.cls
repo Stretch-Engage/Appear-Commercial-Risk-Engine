@@ -224,9 +224,9 @@ private class DnbCreditEvaluatorTest {
 
     @isTest
     static void testBoundary_exactlyAt21_amberElevatedRisk() {
-        // f=20, d=20, fsi=25 (H)
+        // f=20, d=20, fsi=25 (DD)
         // (20*0.45)+(20*0.30)+(25*0.25) = 9+6+6.25 = 21.25
-        DnbEnrichmentResult result = buildResult(20, 20, 'H');
+        DnbEnrichmentResult result = buildResult(20, 20, 'DD');
         Test.startTest();
         DnbCreditEvaluator.evaluate(result);
         Test.stopTest();

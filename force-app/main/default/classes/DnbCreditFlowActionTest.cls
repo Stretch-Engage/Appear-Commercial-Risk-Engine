@@ -203,7 +203,6 @@ private class DnbCreditFlowActionTest {
         injectMockConfig();
         Test.setMock(HttpCalloutMock.class, new SuccessMock());
         Account acc1 = createTestAccount(DUNS);
-        Account acc2 = createTestAccount(DUNS);
 
         List<DnbCreditFlowRequest> requests = new List<DnbCreditFlowRequest>{
             buildRequest(acc1.Id, SCENARIO_KEY),
