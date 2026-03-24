@@ -77,7 +77,7 @@ public with sharing class DnbCreditEngine {
         acc.DnB_Last_Refresh_Date__c = System.now();
         acc.DnB_Financial_Strength__c = result.financialStrength != null ? result.financialStrength : 'No financial strength data';
         acc.DnB_Last_Transaction_ID__c = result.transactionId != null ? result.transactionId : 'No transaction ID';
-        acc.DnB_Recommended_Maximum_Credit__c = String.valueOf(result.creditLimit) + ' ' + (result.creditLimitCurrency != null ? result.creditLimitCurrency : 'USD');
+        acc.DnB_Recommended_Maximum_Credit__c = result.creditLimit != null ? String.valueOf(result.creditLimit) + ' ' + (result.creditLimitCurrency != null ? result.creditLimitCurrency : 'USD'): 'Not available';
         acc.Appear_Rating_Reason__c = result.ratingReason;
         acc.CCA__c = result.compositeScore != null ? result.compositeScore : 'No composite score';
         acc.Failure_Score_Percentile__c = result.failureScorePercentile != null ? result.failureScorePercentile : 0;
@@ -125,4 +125,4 @@ public with sharing class DnbCreditEngine {
             );
         }
     }
-}
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              

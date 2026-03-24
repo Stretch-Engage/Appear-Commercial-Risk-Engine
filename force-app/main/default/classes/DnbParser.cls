@@ -110,6 +110,7 @@ public with sharing class DnbParser {
             : (nordicRating != null ? (String) nordicRating.get('rating') : null);
 
         // Rating Description — join standardRating reasons, fall back to nordicAAARating riskSegment
+     // Rating Description — join standardRating reasons, fall back to nordicAAARating riskSegment, then ratingOverrideReasons
         if (standardRating != null) {
             List<Object> ratingReasons =
                 (List<Object>) standardRating.get('ratingReason');
@@ -133,6 +134,23 @@ public with sharing class DnbParser {
                 (Map<String, Object>) nordicRating.get('riskSegment');
             if (riskSegment != null) {
                 result.dnbRatingDescription = (String) riskSegment.get('description');
+            }
+        }
+        if (String.isBlank(result.dnbRatingDescription) && standardRating != null) {
+            List<Object> overrideReasons =
+                (List<Object>) standardRating.get('ratingOverrideReasons');
+            if (overrideReasons != null && !overrideReasons.isEmpty()) {
+                List<String> descriptions = new List<String>();
+                for (Object item : overrideReasons) {
+                    Map<String, Object> reason = (Map<String, Object>) item;
+                    String txt = (String) reason.get('description');
+                    if (String.isNotBlank(txt)) {
+                        descriptions.add(txt);
+                    }
+                }
+                if (!descriptions.isEmpty()) {
+                    result.dnbRatingDescription = String.join(descriptions, '; ');
+                }
             }
         }
 
