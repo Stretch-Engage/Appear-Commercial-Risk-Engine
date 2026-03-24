@@ -48,16 +48,22 @@ private class DnbCreditEvaluatorTest {
             'Should default to RED_High_Risk when data is insufficient');
     }
 
-    @isTest
-    static void testNullDelinquencyScore_setsInsufficientDataReason() {
-        DnbEnrichmentResult result = buildResult(72, null, '4A');
-        Test.startTest();
-        DnbCreditEvaluator.evaluate(result);
-        Test.stopTest();
+  @isTest
+static void testNullDelinquencyScore_setsInsufficientDataReason() {
+    DnbEnrichmentResult data = new DnbEnrichmentResult();
+    data.failureScorePercentile = 70;
+    data.delinquencyScoreClass  = 0;
+    data.financialStrength      = '4A';
 
-        System.assertEquals('Insufficient DNB financial data',
-            result.ratingReason);
-    }
+    Test.startTest();
+    DnbCreditEvaluator.evaluate(data);
+    Test.stopTest();
+
+    System.assertNotEquals('Insufficient DNB financial data', data.ratingReason,
+        'Delinquency defaulting to 0 should not trigger insufficient data');
+    System.assertNotEquals(null, data.appearCreditRating,
+        'Rating should be set when failure score and FSI are present');
+}
 
     @isTest
     static void testNullFinancialStrength_setsInsufficientDataReason() {

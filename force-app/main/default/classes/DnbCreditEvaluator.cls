@@ -26,7 +26,6 @@ public with sharing class DnbCreditEvaluator {
         data.ratingReason = 'Defaulted to RED - No evaluation performed';
 
         if (data.failureScorePercentile == null ||
-            data.delinquencyScoreClass == null ||
             String.isBlank(data.financialStrength)) {
 
             data.ratingReason = 'Insufficient DNB financial data';

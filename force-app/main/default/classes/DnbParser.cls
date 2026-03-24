@@ -1,8 +1,8 @@
 /**
  * DnbParser
  * Parses the raw JSON response from the D&B API into a DnbEnrichmentResult.
- * Uses untyped deserialisation and manually walks the response structure,
- * so if D&B change a field name or nesting level this is the first place to look.
+ * Uses fallback chaining for regional data structures (e.g. Nordic countries
+ * use nordicAAARating instead of standardRating for some fields).
  *
  * @author Sidharrth Nandhakumar
  * @date 23/03/2026
@@ -14,106 +14,152 @@ public with sharing class DnbParser {
         Map<String, Object> payload =
             (Map<String, Object>) JSON.deserializeUntyped(jsonString);
 
-        Map<String, Object> organization =
+        Map<String, Object> org =
             (Map<String, Object>) payload.get('organization');
 
         DnbEnrichmentResult result = new DnbEnrichmentResult();
 
-        // Nothing to parse — return an empty result rather than throwing
-        if (organization == null) {
+        if (org == null) {
             return result;
         }
 
-        result.duns = (String) organization.get('duns');
-        result.companyName = (String) organization.get('primaryName');
-        result.postalCode = (String) organization.get('countryISOAlpha2Code');
+        result.duns        = (String) org.get('duns');
+        result.companyName = (String) org.get('primaryName');
+        result.postalCode  = (String) org.get('countryISOAlpha2Code');
+
+        // Transaction ID — root level not inside organization
+        Map<String, Object> txn = (Map<String, Object>) payload.get('transactionDetail');
+        if (txn != null) {
+            result.transactionId = (String) txn.get('transactionID');
+        }
 
         Map<String, Object> assessment =
-            (Map<String, Object>) organization.get('dnbAssessment');
+            (Map<String, Object>) org.get('dnbAssessment');
 
-        if (assessment != null) {
+        if (assessment == null) {
+            return result;
+        }
 
-            // Failure Score — national percentile used as the scoring input
-            Map<String, Object> failureScore =
-                (Map<String, Object>) assessment.get('failureScore');
+        // ── Failure Score ─────────────────────────────────────────────────────
+        Map<String, Object> failureScore =
+            (Map<String, Object>) assessment.get('failureScore');
 
-            if (failureScore != null) {
-                result.failureScorePercentile =
-                    (Decimal) failureScore.get('nationalPercentile');
-                result.failureScoreDescription =
-                    (String) failureScore.get('classScoreDescription');
+        if (failureScore != null) {
+            result.failureScorePercentile =
+                (Decimal) failureScore.get('nationalPercentile');
+
+            // classScoreDescription is null for Nordic — fall back to scoreModel
+            String failureDesc = (String) failureScore.get('classScoreDescription');
+            if (String.isBlank(failureDesc)) {
+                Map<String, Object> scoreModel =
+                    (Map<String, Object>) failureScore.get('scoreModel');
+                if (scoreModel != null) {
+                    failureDesc = (String) scoreModel.get('description');
+                }
             }
+            result.failureScoreDescription = failureDesc;
+        }
 
-            // Delinquency Score — national percentile used as the scoring input
-            Map<String, Object> delinquencyScore =
-                (Map<String, Object>) assessment.get('delinquencyScore');
+        // ── Delinquency Score ─────────────────────────────────────────────────
+        // Norway returns empty {} — default to 0 so evaluator can still score
+        Map<String, Object> delinquencyScore =
+            (Map<String, Object>) assessment.get('delinquencyScore');
 
-            if (delinquencyScore != null) {
-                result.delinquencyScoreClass =
-                    (Decimal) delinquencyScore.get('nationalPercentile');
-                result.delinquencyScoreDescription =
-                    (String) delinquencyScore.get('classScoreDescription');
+        if (delinquencyScore != null && !delinquencyScore.isEmpty()) {
+            result.delinquencyScoreClass =
+                (Decimal) delinquencyScore.get('nationalPercentile');
+            result.delinquencyScoreDescription =
+                (String) delinquencyScore.get('classScoreDescription');
+        } else {
+            // Not available for this country — neutral value so scoring still runs
+            result.delinquencyScoreClass       = 0;
+            result.delinquencyScoreDescription = 'Delinquency score not available for this country';
+        }
+
+        // ── Standard Rating + Nordic Fallback ─────────────────────────────────
+        Map<String, Object> standardRating =
+            (Map<String, Object>) assessment.get('standardRating');
+
+        Map<String, Object> nordicRating =
+            (Map<String, Object>) assessment.get('nordicAAARating');
+
+        // Financial Strength — prefer standardRating, fall back to nordicAAARating
+        if (standardRating != null) {
+            String fsGlobal = (String) standardRating.get('financialStrength');
+            if (String.isNotBlank(fsGlobal) && fsGlobal != 'N') {
+                result.financialStrength = fsGlobal;
             }
+        }
+        if (String.isBlank(result.financialStrength) && nordicRating != null) {
+            Map<String, Object> nordicFS =
+                (Map<String, Object>) nordicRating.get('financialStrength');
+            if (nordicFS != null) {
+                result.financialStrength = (String) nordicFS.get('description');
+            }
+        }
 
-            // Standard Rating — source of the FSI code and rating reasons
-            Map<String, Object> standardRating =
-                (Map<String, Object>) assessment.get('standardRating');
+        // Composite Score — prefer standardRating.rating, fall back to nordicAAARating.rating
+        String compositeGlobal = standardRating != null
+            ? (String) standardRating.get('rating') : null;
 
-            if (standardRating != null) {
-                result.financialStrength =
-                    (String) standardRating.get('financialStrength');
+        Boolean compositeIsValid = String.isNotBlank(compositeGlobal)
+            && !compositeGlobal.startsWith('N');
 
-                // D&B can return multiple rating reasons — join them into one string
-                List<Object> ratingReasons =
-                    (List<Object>) standardRating.get('ratingReason');
+        result.compositeScore = compositeIsValid
+            ? compositeGlobal
+            : (nordicRating != null ? (String) nordicRating.get('rating') : null);
 
-                if (ratingReasons != null && !ratingReasons.isEmpty()) {
-                    List<String> descriptions = new List<String>();
-                    for (Object item : ratingReasons) {
-                        Map<String, Object> reason = (Map<String, Object>) item;
-                        String reasonText = (String) reason.get('description');
-                        if (String.isNotBlank(reasonText)) {
-                            descriptions.add(reasonText);
-                        }
+        // Rating Description — join standardRating reasons, fall back to nordicAAARating riskSegment
+        if (standardRating != null) {
+            List<Object> ratingReasons =
+                (List<Object>) standardRating.get('ratingReason');
+
+            if (ratingReasons != null && !ratingReasons.isEmpty()) {
+                List<String> descriptions = new List<String>();
+                for (Object item : ratingReasons) {
+                    Map<String, Object> reason = (Map<String, Object>) item;
+                    String txt = (String) reason.get('description');
+                    if (String.isNotBlank(txt)) {
+                        descriptions.add(txt);
                     }
+                }
+                if (!descriptions.isEmpty()) {
                     result.dnbRatingDescription = String.join(descriptions, '; ');
                 }
             }
-
-            // Credit Limit
-            Map<String, Object> creditLimit =
-                (Map<String, Object>) assessment.get('creditLimitRecommendation');
-
-            if (creditLimit != null) {
-                Map<String, Object> maxLimit =
-                    (Map<String, Object>) creditLimit.get('maximumRecommendedLimit');
-
-                if (maxLimit != null) {
-                    result.creditLimit    = (Decimal) maxLimit.get('value');
-                    result.creditLimitCurrency = (String) maxLimit.get('currency');
-                }
+        }
+        if (String.isBlank(result.dnbRatingDescription) && nordicRating != null) {
+            Map<String, Object> riskSegment =
+                (Map<String, Object>) nordicRating.get('riskSegment');
+            if (riskSegment != null) {
+                result.dnbRatingDescription = (String) riskSegment.get('description');
             }
+        }
 
-            // Composite Score — pulled from the same standardRating block as the FSI
-            Map<String, Object> compositeScore =
-                (Map<String, Object>) assessment.get('standardRating');
-            if (compositeScore != null) {
-                result.compositeScore =
-                    (String) compositeScore.get('rating');
+        // ── Credit Limit ──────────────────────────────────────────────────────
+        Map<String, Object> creditLimitRec =
+            (Map<String, Object>) assessment.get('creditLimitRecommendation');
+
+        if (creditLimitRec != null) {
+            Map<String, Object> maxLimit =
+                (Map<String, Object>) creditLimitRec.get('maximumRecommendedLimit');
+            if (maxLimit != null) {
+                result.creditLimit         = (Decimal) maxLimit.get('value');
+                result.creditLimitCurrency = (String)  maxLimit.get('currency');
             }
+        }
 
-            // Transaction ID lives at the root of the payload, not inside organization
-            Map<String, Object> transactionDetail =
-                (Map<String, Object>) payload.get('transactionDetail');
+        // ── Legal Events ──────────────────────────────────────────────────────
+        Map<String, Object> legalEvents =
+            (Map<String, Object>) org.get('legalEvents');
 
-            if (transactionDetail != null) {
-                result.transactionId =
-                    (String) transactionDetail.get('transactionID');
-            }
-
-            result.hasOpenLiens = false;
-            result.hasOpenJudgments = false;
-            result.hasOpenBankruptcy = false;
+        if (legalEvents != null) {
+            result.hasOpenLiens =
+                legalEvents.get('hasOpenLiens') == true;
+            result.hasOpenJudgments =
+                legalEvents.get('hasOpenJudgments') == true;
+            result.hasOpenBankruptcy =
+                legalEvents.get('hasOpenBankruptcy') == true;
         }
 
         return result;

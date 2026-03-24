@@ -14,59 +14,59 @@ private class DnbFsiScoringServiceTest {
     }
 
     @isTest
-    static void test4A_returns90() {
+    static void test4A_returns95() {
         Test.startTest();
         Decimal score = DnbFsiScoringService.getScore('4A');
         Test.stopTest();
-        System.assertEquals(90, score, '4A should return 90');
+        System.assertEquals(95, score, '4A should return 95');
     }
 
     @isTest
-    static void test3A_returns80() {
+    static void test3A_returns85() {
         Test.startTest();
         Decimal score = DnbFsiScoringService.getScore('3A');
         Test.stopTest();
-        System.assertEquals(80, score, '3A should return 80');
+        System.assertEquals(85, score, '3A should return 85');
     }
 
     @isTest
-    static void test2A_returns65() {
+    static void test2A_returns75() {
         Test.startTest();
         Decimal score = DnbFsiScoringService.getScore('2A');
         Test.stopTest();
-        System.assertEquals(65, score, '2A should return 65');
+        System.assertEquals(75, score, '2A should return 75');
     }
 
     @isTest
-    static void test1A_returns55() {
+    static void test1A_returns65() {
         Test.startTest();
         Decimal score = DnbFsiScoringService.getScore('1A');
         Test.stopTest();
-        System.assertEquals(55, score, '1A should return 55');
+        System.assertEquals(65, score, '1A should return 65');
     }
 
     @isTest
-    static void testB_returns45() {
+    static void testCB_returns45() {
         Test.startTest();
-        Decimal score = DnbFsiScoringService.getScore('B');
+        Decimal score = DnbFsiScoringService.getScore('CB');
         Test.stopTest();
-        System.assertEquals(45, score, 'B should return 45');
+        System.assertEquals(45, score, 'CB should return 45');
     }
 
     @isTest
-    static void testH_returns25() {
+    static void testDD_returns25() {
         Test.startTest();
-        Decimal score = DnbFsiScoringService.getScore('H');
+        Decimal score = DnbFsiScoringService.getScore('DD');
         Test.stopTest();
-        System.assertEquals(25, score, 'H should return 25');
+        System.assertEquals(25, score, 'DD should return 25');
     }
 
     @isTest
-    static void testHH_returns10() {
+    static void testHH_returns5() {
         Test.startTest();
         Decimal score = DnbFsiScoringService.getScore('HH');
         Test.stopTest();
-        System.assertEquals(10, score, 'HH should return 10');
+        System.assertEquals(5, score, 'HH should return 5');
     }
 
     // ─────────────────────────────────────────
@@ -118,27 +118,27 @@ private class DnbFsiScoringServiceTest {
     }
 
     @isTest
-    static void testLowercase4a_returns90() {
+    static void testLowercase4a_returns95() {
         Test.startTest();
         Decimal score = DnbFsiScoringService.getScore('4a');
         Test.stopTest();
-        System.assertEquals(90, score, 'Lowercase 4a should match 4A and return 90');
+        System.assertEquals(95, score, 'Lowercase 4a should match 4A and return 95');
     }
 
     @isTest
-    static void testLowercaseB_returns45() {
+    static void testLowercaseCb_returns45() {
         Test.startTest();
-        Decimal score = DnbFsiScoringService.getScore('b');
+        Decimal score = DnbFsiScoringService.getScore('cb');
         Test.stopTest();
-        System.assertEquals(45, score, 'Lowercase b should match B and return 45');
+        System.assertEquals(45, score, 'Lowercase cb should match CB and return 45');
     }
 
     @isTest
-    static void testLowercaseHh_returns10() {
+    static void testLowercaseHh_returns5() {
         Test.startTest();
         Decimal score = DnbFsiScoringService.getScore('hh');
         Test.stopTest();
-        System.assertEquals(10, score, 'Lowercase hh should match HH and return 10');
+        System.assertEquals(5, score, 'Lowercase hh should match HH and return 5');
     }
 
     // ─────────────────────────────────────────
@@ -150,7 +150,7 @@ private class DnbFsiScoringServiceTest {
         Test.startTest();
         Decimal score = DnbFsiScoringService.getScore('  4A  ');
         Test.stopTest();
-        System.assertEquals(90, score, 'Padded 4A should trim and return 90');
+        System.assertEquals(95, score, 'Padded 4A should trim and return 95');
     }
 
     @isTest
@@ -158,6 +158,6 @@ private class DnbFsiScoringServiceTest {
         Test.startTest();
         Decimal score = DnbFsiScoringService.getScore('  3a  ');
         Test.stopTest();
-        System.assertEquals(80, score, 'Padded lowercase 3a should trim and return 80');
+        System.assertEquals(85, score, 'Padded lowercase 3a should trim and return 85');
     }
 }

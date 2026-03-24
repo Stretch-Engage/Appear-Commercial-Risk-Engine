@@ -14,6 +14,11 @@ private class DnbParserTest {
                 '"duns": "185520819",' +
                 '"primaryName": "Acme Corporation",' +
                 '"countryISOAlpha2Code": "US",' +
+                '"legalEvents": {' +
+                    '"hasOpenLiens": false,' +
+                    '"hasOpenJudgments": false,' +
+                    '"hasOpenBankruptcy": false' +
+                '},' +
                 '"dnbAssessment": {' +
                     '"failureScore": {' +
                         '"nationalPercentile": 72,' +
@@ -35,6 +40,48 @@ private class DnbParserTest {
                         '"maximumRecommendedLimit": {' +
                             '"value": 150000,' +
                             '"currency": "USD"' +
+                        '}' +
+                    '}' +
+                '}' +
+            '}' +
+        '}';
+    }
+
+    private static String buildNordicPayload() {
+        return '{' +
+            '"transactionDetail": {' +
+                '"transactionID": "TXN-345146201-001"' +
+            '},' +
+            '"organization": {' +
+                '"duns": "345146201",' +
+                '"primaryName": "Lyse Tele AS",' +
+                '"countryISOAlpha2Code": "NO",' +
+                '"legalEvents": {' +
+                    '"hasOpenLiens": false,' +
+                    '"hasOpenJudgments": true,' +
+                    '"hasOpenBankruptcy": false' +
+                '},' +
+                '"dnbAssessment": {' +
+                    '"failureScore": {' +
+                        '"nationalPercentile": 70,' +
+                        '"classScoreDescription": null,' +
+                        '"scoreModel": {"description": "NO36021"}' +
+                    '},' +
+                    '"delinquencyScore": {},' +
+                    '"standardRating": {' +
+                        '"financialStrength": "N",' +
+                        '"rating": "N2",' +
+                        '"ratingReason": []' +
+                    '},' +
+                    '"nordicAAARating": {' +
+                        '"rating": "A2",' +
+                        '"financialStrength": {"description": "A"},' +
+                        '"riskSegment": {"description": "2"}' +
+                    '},' +
+                    '"creditLimitRecommendation": {' +
+                        '"maximumRecommendedLimit": {' +
+                            '"value": 202700000,' +
+                            '"currency": "NOK"' +
                         '}' +
                     '}' +
                 '}' +
@@ -100,8 +147,25 @@ private class DnbParserTest {
         '}';
     }
 
+    private static String buildPayloadWithLegalEvents() {
+        return '{' +
+            '"transactionDetail": {"transactionID": "TXN-LEGAL-001"},' +
+            '"organization": {' +
+                '"duns": "185520819",' +
+                '"primaryName": "Acme Corporation",' +
+                '"countryISOAlpha2Code": "US",' +
+                '"legalEvents": {' +
+                    '"hasOpenLiens": true,' +
+                    '"hasOpenJudgments": true,' +
+                    '"hasOpenBankruptcy": true' +
+                '},' +
+                '"dnbAssessment": {}' +
+            '}' +
+        '}';
+    }
+
     // ─────────────────────────────────────────
-    // Happy Path — Full Payload
+    // Happy Path — Full Payload (Global)
     // ─────────────────────────────────────────
 
     @isTest
@@ -131,9 +195,145 @@ private class DnbParserTest {
         DnbEnrichmentResult result = DnbParser.parse(buildFullPayload());
         Test.stopTest();
 
-        System.assertEquals(false, result.hasOpenLiens, 'hasOpenLiens should default to false');
-        System.assertEquals(false, result.hasOpenJudgments, 'hasOpenJudgments should default to false');
-        System.assertEquals(false, result.hasOpenBankruptcy, 'hasOpenBankruptcy should default to false');
+        System.assertEquals(false, result.hasOpenLiens, 'hasOpenLiens should be false');
+        System.assertEquals(false, result.hasOpenJudgments, 'hasOpenJudgments should be false');
+        System.assertEquals(false, result.hasOpenBankruptcy, 'hasOpenBankruptcy should be false');
+    }
+
+    // ─────────────────────────────────────────
+    // Nordic Payload Tests
+    // ─────────────────────────────────────────
+
+    @isTest
+    static void testNordicPayload_financialStrengthFallsBackToNordicAAA() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildNordicPayload());
+        Test.stopTest();
+
+        System.assertEquals('A', result.financialStrength,
+            'Nordic: financialStrength should fall back to nordicAAARating.financialStrength.description');
+    }
+
+    @isTest
+    static void testNordicPayload_compositeScoreFallsBackToNordicAAA() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildNordicPayload());
+        Test.stopTest();
+
+        System.assertEquals('A2', result.compositeScore,
+            'Nordic: compositeScore should fall back to nordicAAARating.rating');
+    }
+
+    @isTest
+    static void testNordicPayload_ratingDescriptionFallsBackToRiskSegment() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildNordicPayload());
+        Test.stopTest();
+
+        System.assertEquals('2', result.dnbRatingDescription,
+            'Nordic: dnbRatingDescription should fall back to nordicAAARating.riskSegment.description');
+    }
+
+    @isTest
+    static void testNordicPayload_failureScoreDescriptionFallsBackToScoreModel() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildNordicPayload());
+        Test.stopTest();
+
+        System.assertEquals('NO36021', result.failureScoreDescription,
+            'Nordic: failureScoreDescription should fall back to scoreModel.description when classScoreDescription is null');
+    }
+
+    @isTest
+    static void testNordicPayload_emptyDelinquencyDefaultsToZero() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildNordicPayload());
+        Test.stopTest();
+
+        System.assertEquals(0, result.delinquencyScoreClass,
+            'Nordic: delinquencyScoreClass should default to 0 when delinquencyScore block is empty');
+        System.assertEquals('Delinquency score not available for this country',
+            result.delinquencyScoreDescription,
+            'Nordic: delinquencyScoreDescription should reflect unavailability');
+    }
+
+    @isTest
+    static void testNordicPayload_failureScorePercentileMapped() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildNordicPayload());
+        Test.stopTest();
+
+        System.assertEquals(70, result.failureScorePercentile,
+            'Nordic: failureScorePercentile should map correctly');
+    }
+
+    @isTest
+    static void testNordicPayload_creditLimitInNOK() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildNordicPayload());
+        Test.stopTest();
+
+        System.assertEquals(202700000, result.creditLimit,
+            'Nordic: credit limit should map correctly');
+        System.assertEquals('NOK', result.creditLimitCurrency,
+            'Nordic: credit limit currency should be NOK');
+    }
+
+    @isTest
+    static void testNordicPayload_legalEventsMappedCorrectly() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildNordicPayload());
+        Test.stopTest();
+
+        System.assertEquals(false, result.hasOpenLiens,
+            'Nordic: hasOpenLiens should be false');
+        System.assertEquals(true, result.hasOpenJudgments,
+            'Nordic: hasOpenJudgments should be true');
+        System.assertEquals(false, result.hasOpenBankruptcy,
+            'Nordic: hasOpenBankruptcy should be false');
+    }
+
+    @isTest
+    static void testNordicPayload_transactionIdMapped() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildNordicPayload());
+        Test.stopTest();
+
+        System.assertEquals('TXN-345146201-001', result.transactionId,
+            'Nordic: transactionId should be mapped correctly');
+    }
+
+    // ─────────────────────────────────────────
+    // Legal Events Tests
+    // ─────────────────────────────────────────
+
+    @isTest
+    static void testLegalEvents_allTrueMappedCorrectly() {
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildPayloadWithLegalEvents());
+        Test.stopTest();
+
+        System.assertEquals(true, result.hasOpenLiens,
+            'hasOpenLiens should be true from legalEvents');
+        System.assertEquals(true, result.hasOpenJudgments,
+            'hasOpenJudgments should be true from legalEvents');
+        System.assertEquals(true, result.hasOpenBankruptcy,
+            'hasOpenBankruptcy should be true from legalEvents');
+    }
+
+    @isTest
+    static void testLegalEvents_missingBlock_defaultsToFalse() {
+        // Payload has no legalEvents block — defaults from constructor should hold
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildPayloadWithNullScores());
+        Test.stopTest();
+
+        System.assertEquals(false, result.hasOpenLiens,
+            'hasOpenLiens should default false when legalEvents missing');
+        System.assertEquals(false, result.hasOpenJudgments,
+            'hasOpenJudgments should default false when legalEvents missing');
+        System.assertEquals(false, result.hasOpenBankruptcy,
+            'hasOpenBankruptcy should default false when legalEvents missing');
     }
 
     // ─────────────────────────────────────────
@@ -142,40 +342,28 @@ private class DnbParserTest {
 
     @isTest
     static void testPostalCode_mappedFromCountryISOCode() {
-        // NOTE: postalCode field is currently mapped from countryISOAlpha2Code
-        // This may be an intentional field reuse or a mapping bug worth reviewing
         Test.startTest();
         DnbEnrichmentResult result = DnbParser.parse(buildFullPayload());
         Test.stopTest();
 
-        System.assertEquals(
-            'US',
-            result.postalCode,
-            'postalCode is currently mapped from countryISOAlpha2Code — verify this is intentional'
-        );
+        System.assertEquals('US', result.postalCode,
+            'postalCode is currently mapped from countryISOAlpha2Code — verify this is intentional');
     }
 
     @isTest
     static void testCompositeScore_mappedFromStandardRatingRating() {
-        // compositeScore reuses the standardRating block (same as financialStrength)
         Test.startTest();
         DnbEnrichmentResult result = DnbParser.parse(buildFullPayload());
         Test.stopTest();
 
-        System.assertEquals(
-            '2',
-            result.compositeScore,
-            'compositeScore should be mapped from standardRating.rating'
-        );
-        System.assertEquals(
-            '4A',
-            result.financialStrength,
-            'financialStrength should be mapped from standardRating.financialStrength'
-        );
+        System.assertEquals('2', result.compositeScore,
+            'compositeScore should be mapped from standardRating.rating');
+        System.assertEquals('4A', result.financialStrength,
+            'financialStrength should be mapped from standardRating.financialStrength');
     }
 
     // ─────────────────────────────────────────
-    // Null / Missing Organization Tests
+    // Missing Organization Tests
     // ─────────────────────────────────────────
 
     @isTest
@@ -219,24 +407,19 @@ private class DnbParserTest {
     }
 
     @isTest
-    static void testMissingAssessment_transactionIdNotSet() {
-        // ⚠️ Known behaviour: transactionDetail parsing sits inside the
-        // if (assessment != null) block, so transactionId will be null
-        // even when transactionDetail exists at root level.
-        // Consider moving transactionDetail parsing outside that block.
+    static void testMissingAssessment_transactionIdStillMapped() {
+        // Transaction ID is now parsed outside the assessment block
+        // so it should be populated even when assessment is missing
         Test.startTest();
         DnbEnrichmentResult result = DnbParser.parse(buildPayloadWithoutAssessment());
         Test.stopTest();
 
-        System.assertEquals(
-            null,
-            result.transactionId,
-            'transactionId will be null when assessment block is missing — this may be unintentional'
-        );
+        System.assertEquals('TXN-185520819-002', result.transactionId,
+            'transactionId should be mapped even when assessment block is missing');
     }
 
     // ─────────────────────────────────────────
-    // Missing Nested Blocks Tests
+    // Empty Assessment Block Tests
     // ─────────────────────────────────────────
 
     @isTest
@@ -247,10 +430,24 @@ private class DnbParserTest {
 
         System.assertNotEquals(null, result, 'Result should not be null with empty assessment');
         System.assertEquals(null, result.failureScorePercentile, 'Failure score should be null');
-        System.assertEquals(null, result.delinquencyScoreClass, 'Delinquency score should be null');
         System.assertEquals(null, result.financialStrength, 'Financial strength should be null');
         System.assertEquals(null, result.creditLimit, 'Credit limit should be null');
         System.assertEquals(null, result.compositeScore, 'Composite score should be null');
+    }
+
+    @isTest
+    static void testEmptyAssessmentBlock_delinquencyDefaultsToZero() {
+        // Empty assessment block has no delinquencyScore key at all
+        // Parser defaults to 0 when block is missing or empty
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(buildPayloadWithNullScores());
+        Test.stopTest();
+
+        System.assertEquals(0, result.delinquencyScoreClass,
+            'delinquencyScoreClass should default to 0 when block is missing');
+        System.assertEquals('Delinquency score not available for this country',
+            result.delinquencyScoreDescription,
+            'delinquencyScoreDescription should reflect unavailability');
     }
 
     @isTest
@@ -312,14 +509,18 @@ private class DnbParserTest {
         Test.stopTest();
 
         System.assertEquals(null, result.dnbRatingDescription,
-            'dnbRatingDescription should be null when ratingReason array is empty');
+            'dnbRatingDescription should be null when ratingReason array is empty and no nordicAAARating');
     }
 
     @isTest
-    static void testNullClassScoreDescription_fieldsAreNull() {
+    static void testNullClassScoreDescription_fallsBackToScoreModel() {
         String json =
             '{"organization":{"duns":"185520819","dnbAssessment":{' +
-                '"failureScore":{"nationalPercentile":50,"classScoreDescription":null},' +
+                '"failureScore":{' +
+                    '"nationalPercentile":50,' +
+                    '"classScoreDescription":null,' +
+                    '"scoreModel":{"description":"MODEL-001"}' +
+                '},' +
                 '"delinquencyScore":{"nationalPercentile":60,"classScoreDescription":null}' +
             '}}}';
 
@@ -327,8 +528,8 @@ private class DnbParserTest {
         DnbEnrichmentResult result = DnbParser.parse(json);
         Test.stopTest();
 
-        System.assertEquals(null, result.failureScoreDescription,
-            'failureScoreDescription should be null when classScoreDescription is null');
+        System.assertEquals('MODEL-001', result.failureScoreDescription,
+            'failureScoreDescription should fall back to scoreModel.description when classScoreDescription is null');
         System.assertEquals(null, result.delinquencyScoreDescription,
             'delinquencyScoreDescription should be null when classScoreDescription is null');
     }
@@ -347,5 +548,44 @@ private class DnbParserTest {
 
         System.assertEquals('Strong financial profile', result.dnbRatingDescription,
             'Single ratingReason should not have trailing semicolon');
+    }
+
+    // ─────────────────────────────────────────
+    // Nordic Fallback Edge Cases
+    // ─────────────────────────────────────────
+
+    @isTest
+    static void testNordicFallback_noNordicRating_financialStrengthRemainsNull() {
+        // standardRating has 'N' but no nordicAAARating present
+        String json =
+            '{"organization":{"duns":"185520819","dnbAssessment":{' +
+                '"standardRating":{"financialStrength":"N","rating":"N2","ratingReason":[]}' +
+            '}}}';
+
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(json);
+        Test.stopTest();
+
+        System.assertEquals(null, result.financialStrength,
+            'financialStrength should be null when standardRating is N and no nordicAAARating exists');
+    }
+
+    @isTest
+    static void testNordicFallback_compositeScorePrefersStandardRating() {
+        // standardRating has a valid rating — should prefer it over nordicAAARating
+        String json =
+            '{"organization":{"duns":"185520819","dnbAssessment":{' +
+                '"standardRating":{"financialStrength":"4A","rating":"2","ratingReason":[]},' +
+                '"nordicAAARating":{"rating":"A1","financialStrength":{"description":"A"}}' +
+            '}}}';
+
+        Test.startTest();
+        DnbEnrichmentResult result = DnbParser.parse(json);
+        Test.stopTest();
+
+        System.assertEquals('2', result.compositeScore,
+            'compositeScore should prefer standardRating.rating over nordicAAARating.rating');
+        System.assertEquals('4A', result.financialStrength,
+            'financialStrength should prefer standardRating when not N');
     }
 }
