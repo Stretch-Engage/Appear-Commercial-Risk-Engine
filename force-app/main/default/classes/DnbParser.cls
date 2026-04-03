@@ -21,6 +21,14 @@
  * @date 23/03/2026 — Phase 2 updated 02/04/2026
  */
 public with sharing class DnbParser {
+     private static final Map<String, String> NORDIC_SEGMENT_LABELS =
+        new Map<String, String>{
+            '1' => 'AAA - Lowest risk',
+            '2' => 'AA - Low risk',
+            '3' => 'A - Medium risk',
+            '4' => 'B - Elevated risk',
+            '5' => 'C - High risk'
+        };
 
     public static DnbEnrichmentResult parse(String jsonString) {
 
@@ -95,14 +103,17 @@ public with sharing class DnbParser {
 
             // classScoreDescription is null for Nordic — fall back to scoreModel.description
             String failureDesc = (String) failureScore.get('classScoreDescription');
-            if (String.isBlank(failureDesc)) {
-                Map<String, Object> scoreModel =
-                    (Map<String, Object>) failureScore.get('scoreModel');
-                if (scoreModel != null) {
-                    failureDesc = (String) scoreModel.get('description');
+                if (String.isBlank(failureDesc)) {
+                    Map<String, Object> scoreModel =
+                        (Map<String, Object>) failureScore.get('scoreModel');
+                    if (scoreModel != null) {
+                        String modelCode = (String) scoreModel.get('description');
+                        failureDesc = String.isNotBlank(modelCode)
+                            ? 'Score model: ' + modelCode
+                            : 'Failure score description not available';
+                    }
                 }
-            }
-            result.failureScoreDescription = failureDesc;
+                result.failureScoreDescription = failureDesc;
         }
 
         // ── Delinquency Score ─────────────────────────────────────────────────
@@ -150,7 +161,7 @@ public with sharing class DnbParser {
         // Financial Strength — prefer standardRating, fall back to nordicAAARating
         if (standardRating != null) {
             String fsGlobal = (String) standardRating.get('financialStrength');
-            if (String.isNotBlank(fsGlobal) && fsGlobal != 'N') {
+            if (String.isNotBlank(fsGlobal) && fsGlobal != 'NQ') {
                 result.financialStrength = fsGlobal;
             }
         }
@@ -204,12 +215,15 @@ public with sharing class DnbParser {
             }
         }
 
-        // Nordic fallback for rating description — riskSegment description
+        // Nordic fallback for rating description — riskSegment description mapped to label
         if (String.isBlank(result.dnbRatingDescription) && nordicRating != null) {
             Map<String, Object> riskSeg =
                 (Map<String, Object>) nordicRating.get('riskSegment');
             if (riskSeg != null) {
-                result.dnbRatingDescription = (String) riskSeg.get('description');
+                String seg = (String) riskSeg.get('description');
+                result.dnbRatingDescription = NORDIC_SEGMENT_LABELS.containsKey(seg)
+                    ? NORDIC_SEGMENT_LABELS.get(seg)
+                    : 'Nordic risk segment: ' + seg;
             }
         }
 
