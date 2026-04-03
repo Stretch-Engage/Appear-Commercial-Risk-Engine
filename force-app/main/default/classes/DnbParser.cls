@@ -125,7 +125,20 @@ public with sharing class DnbParser {
         if (delinquencyScore != null && !delinquencyScore.isEmpty()) {
             result.delinquencyScoreClass      = decimalFrom(delinquencyScore, 'classScore');
             result.delinquencyScorePercentile = decimalFrom(delinquencyScore, 'nationalPercentile');
-            result.delinquencyScoreDescription = (String) delinquencyScore.get('classScoreDescription');
+
+            
+            String delinquencyDesc = (String) delinquencyScore.get('classScoreDescription');
+            if (String.isBlank(delinquencyDesc)) {
+                Map<String, Object> delinqModel =
+                    (Map<String, Object>) delinquencyScore.get('scoreModel');
+                if (delinqModel != null && !delinqModel.isEmpty()) {
+                    String modelCode = (String) delinqModel.get('description');
+                    delinquencyDesc = String.isNotBlank(modelCode)
+                        ? 'Score model: ' + modelCode
+                        : 'Delinquency score description not available';
+                }
+            }
+            result.delinquencyScoreDescription = delinquencyDesc;
 
             // Override reasons — array, extract up to 3
             List<Object> overrides =
@@ -150,7 +163,6 @@ public with sharing class DnbParser {
             result.delinquencyScorePercentile  = 0;
             result.delinquencyScoreDescription = 'Delinquency score not available for this country';
         }
-
         // ── Standard Rating + Nordic Fallback ─────────────────────────────────
         Map<String, Object> standardRating =
             (Map<String, Object>) assessment.get('standardRating');
