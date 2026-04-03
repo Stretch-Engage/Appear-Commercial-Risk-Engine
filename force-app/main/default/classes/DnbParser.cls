@@ -167,7 +167,7 @@ public with sharing class DnbParser {
             ? (String) standardRating.get('rating') : null;
 
         Boolean compositeIsValid = String.isNotBlank(compositeGlobal)
-            && !compositeGlobal.startsWith('N');
+            && !compositeGlobal.startsWith('NQ'); // "Not Qualified" — treat as no data so it doesn't drag down the score
 
         result.compositeScore = compositeIsValid
             ? compositeGlobal
