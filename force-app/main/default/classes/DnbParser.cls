@@ -75,18 +75,7 @@ public with sharing class DnbParser {
         // Legal Entity Identifier
         result.legalEntityIdentifier = (String) org.get('legalEntityIdentifier');
 
-        // ── Family Tree Role → Account (entityresolution block) ───────────────
-        // Requires entityresolution block in Dnb_Block_Group__mdt config
-        Map<String, Object> corporateLinkage =
-            (Map<String, Object>) org.get('corporateLinkage');
-        if (corporateLinkage != null) {
-            List<Object> treeRoles =
-                (List<Object>) corporateLinkage.get('familytreeRolesPlayed');
-            if (treeRoles != null && !treeRoles.isEmpty()) {
-                Map<String, Object> role = (Map<String, Object>) treeRoles[0];
-                result.familyTreeRole = (String) role.get('description');
-            }
-        }
+   
 
         // ── D&B Assessment ────────────────────────────────────────────────────
         Map<String, Object> assessment =

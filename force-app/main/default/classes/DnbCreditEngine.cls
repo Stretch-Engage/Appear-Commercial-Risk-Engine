@@ -67,8 +67,7 @@ public with sharing class DnbCreditEngine {
                 DnB_Website_Domain__c,
                 DnB_Telephone_Number__c,
                 DnB_Telephone_ISD_Code__c,
-                DnB_Legal_Entity_Identifier__c,
-                DnB_Family_Tree_Role__c
+                DnB_Legal_Entity_Identifier__c
             FROM Account
             WHERE Id = :accountId
             LIMIT 1
@@ -133,9 +132,7 @@ public with sharing class DnbCreditEngine {
         if (String.isBlank(acc.DnB_Legal_Entity_Identifier__c)) {
             acc.DnB_Legal_Entity_Identifier__c = result.legalEntityIdentifier; // ← NEW
         }
-        if (String.isBlank(acc.DnB_Family_Tree_Role__c)) {
-            acc.DnB_Family_Tree_Role__c = result.familyTreeRole; // ← NEW
-        }
+        
 
         update acc;
 

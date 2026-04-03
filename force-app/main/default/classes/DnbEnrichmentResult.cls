@@ -6,7 +6,6 @@
  *
  * Phase 2 additions:
  *  - companyinfo fields (SIC, website, telephone, LEI) → Account
- *  - entityresolution familyTreeRole → Account
  *  - financialstrengthinsight extensions (failureScoreClass, delinquency fix,
  *    riskSegment, ratingReasons 1-5, financialCondition, isHighRiskBusiness)
  *  - companyfinancials overview block (14 fields) → Credit Assessment
@@ -33,7 +32,7 @@ public with sharing class DnbEnrichmentResult {
     public String  telephoneNumber;       // telephone[0].telephoneNumber
     public String  telephoneIsdCode;      // telephone[0].isdCode
     public String  legalEntityIdentifier; // organization.legalEntityIdentifier
-    public String  familyTreeRole;        // corporateLinkage.familytreeRolesPlayed[0].description
+   
 
     // ── Failure Score ─────────────────────────────────────────────────────────
     public Decimal failureScoreClass;       // failureScore.classScore (0–9 integer)
