@@ -94,7 +94,7 @@ public with sharing class DnbCreditEngine {
         acc.Appear_Rating_Reason__c          = result.ratingReason;
         acc.DnB_Rating_Reason__c             = result.ratingReason            != null ? result.ratingReason            : 'No rating reason provided';
         acc.DnB_Financial_Strength__c        = result.financialStrength        != null ? result.financialStrength        : 'No financial strength data';
-        acc.DnB_Rating_Description__c        = result.dnbRatingDescription     != null ? result.dnbRatingDescription     : 'No data available';
+        acc.DnB_Rating_Description__c        = result.dnbRatingDescription     != null ? result.dnbRatingDescription     : 'No rating reasons provided by D&B';
         acc.DnB_Failure_Score_Description__c = result.failureScoreDescription  != null ? result.failureScoreDescription  : 'No data available';
         acc.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription != null ? result.delinquencyScoreDescription : 'No data available';
         acc.Failure_Score_Percentile__c      = result.failureScorePercentile   != null ? result.failureScorePercentile   : 0;
@@ -148,7 +148,7 @@ public with sharing class DnbCreditEngine {
         assessment.Rating_Reason__c              = result.ratingReason;
         assessment.DnB_Transaction_Id__c         = result.transactionId             != null ? result.transactionId             : 'No transaction ID';
         assessment.Financial_Strength__c         = result.financialStrength         != null ? result.financialStrength         : 'No financial strength data';
-        assessment.DnB_Rating_Description__c     = result.dnbRatingDescription      != null ? result.dnbRatingDescription      : 'No data available';
+        assessment.DnB_Rating_Description__c     = result.dnbRatingDescription      != null ? result.dnbRatingDescription      : 'No rating reasons provided by D&B';
         assessment.DnB_Failure_Score_Description__c     = result.failureScoreDescription  != null ? result.failureScoreDescription  : 'No data available';
         assessment.DnB_Delinquency_Score_Description__c = result.delinquencyScoreDescription != null ? result.delinquencyScoreDescription : 'No data available';
         assessment.Failure_Score_Percentile__c   = result.failureScorePercentile    != null ? result.failureScorePercentile    : 0;
