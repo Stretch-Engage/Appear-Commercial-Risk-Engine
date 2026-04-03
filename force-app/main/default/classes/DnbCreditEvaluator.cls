@@ -32,8 +32,12 @@ public with sharing class DnbCreditEvaluator {
             return;
         }
 
-        Decimal failureScore = data.failureScorePercentile;
-        Decimal delinquencyScore = data.delinquencyScoreClass;
+        Decimal failureScore = data.failureScorePercentile != null
+            ? data.failureScorePercentile
+            : 0; // treat missing failure percentile as 0 to avoid unfairly boosting score
+        Decimal delinquencyScore = data.delinquencyScorePercentile != null
+            ? data.delinquencyScorePercentile
+            : 0; // treat missing delinquency percentile as 0 to avoid unfairly boosting score
         Decimal fsiScore = DnbFsiScoringService.getScore(data.financialStrength);
 
         // Weighted composite score across the three D&B signals
