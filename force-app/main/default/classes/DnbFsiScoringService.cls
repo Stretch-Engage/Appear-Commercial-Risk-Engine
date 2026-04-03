@@ -44,6 +44,10 @@ public with sharing class DnbFsiScoringService {
             when 'FF' { return 15; }
             when 'GG' { return 10; }
             when 'HH' { return 5; }
+            when 'N'  { return 3;  }  // Negative net worth — real signal, worse than HH
+            when 'NQ' { return 0;  }  
+            when '--' { return 0;  }  
+            when 'DS' { return 0;  }  
 
             // R-codes indicate an interim/unaudited balance sheet
             when '1R' { return 35; }
